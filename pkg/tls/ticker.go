@@ -13,8 +13,8 @@ func Start() funcs.Stop {
 
 	go func() {
 		for {
-			for _, dir := range config.TLSConfigPaths {
-				LoadConfigs(dir)
+			for _, dir := range config.CertificateRequestsPaths {
+				LoadCertificateRequests(dir)
 			}
 
 			select {

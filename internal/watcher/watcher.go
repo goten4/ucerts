@@ -28,7 +28,7 @@ func Start() funcs.Stop {
 	go listenEvents()
 
 	// Add TLS configs paths
-	for _, path := range config.TLSConfigPaths {
+	for _, path := range config.CertificateRequestsPaths {
 		logger.Printf("Watching for path %s", path)
 		if err = watcher.Add(path); err != nil {
 			logger.Failf("Failed to add TLS config dir %s: %v", path, err)
@@ -46,7 +46,7 @@ func listenEvents() {
 				return
 			}
 			if event.Has(fsnotify.Write) {
-				tls.Load(event.Name)
+				tls.HandleCertificateRequestFile(event.Name)
 			}
 		case err, ok := <-watcher.Errors:
 			if !ok {

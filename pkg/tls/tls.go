@@ -2,16 +2,9 @@ package tls
 
 import (
 	"crypto"
-	"crypto/rand"
-	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
-	"crypto/x509/pkix"
-	"encoding/pem"
 	"errors"
-	"math/big"
-	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/goten4/ucerts/internal/config"
@@ -38,166 +31,67 @@ func Init() {
 	}
 }
 
-func LoadConfigs(dir string) {
-	for _, file := range readDir(dir) {
-		Load(file)
-	}
-}
-
-func readDir(dir string) []string {
-	entries, err := os.ReadDir(dir)
+func LoadCertificateRequests(dir string) {
+	files, err := ReadDir(dir)
 	if err != nil {
 		logger.Errorf("Failed to read directory %s: %v", dir, err)
-		return []string{}
+		return
 	}
-	files := make([]string, 0, len(entries))
-	for _, entry := range entries {
-		info, _ := entry.Info()
-		if !info.IsDir() {
-			files = append(files, filepath.Join(dir, info.Name()))
-		}
+	for _, file := range files {
+		HandleCertificateRequestFile(file)
 	}
-	return files
 }
 
-func Load(path string) {
-	conf, err := LoadConfig(path)
+func HandleCertificateRequestFile(file string) {
+	logger.Printf("Handle certificate request %s", file)
+	req, err := LoadCertificateRequest(file)
 	if err != nil {
 		return
 	}
 
-	if _, err := os.Stat(conf.OutCertPath); errors.Is(err, os.ErrNotExist) {
-		if ok := createDirectoryIfNecessary(conf.OutCertPath); !ok {
+	if FileDoesNotExists(req.OutCertPath) {
+		if ok := MakeParentsDirectories(req.OutCertPath); !ok {
 			return
 		}
-		if ok := createDirectoryIfNecessary(conf.OutKeyPath); !ok {
-			return
-		}
-		GenerateCertificate(conf)
+		GenerateOutFilesFromRequest(req)
 		return
 	}
 
-	cert, err := loadCert(conf.OutCertPath)
+	cert, err := LoadCertFromFile(req.OutCertPath)
 	if err != nil {
-		logger.Errorf("Invalid certificate %s: %v", conf.OutCertPath, err)
-		GenerateCertificate(conf)
+		logger.Errorf("Invalid certificate %s: %v", req.OutCertPath, err)
+		GenerateOutFilesFromRequest(req)
 		return
 	}
 
 	if cert.NotAfter.After(time.Now()) {
-		logger.Printf("Expired certificate %s", conf.OutCertPath, err)
-		GenerateCertificate(conf)
+		logger.Printf("Expired certificate %s", req.OutCertPath, err)
+		GenerateOutFilesFromRequest(req)
 		return
 	}
 }
 
-func createDirectoryIfNecessary(path string) bool {
-	dir := filepath.Dir(path)
-	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
-		if err := os.MkdirAll(dir, 0755); err != nil {
-			return false
-		}
-	}
-	return true
-}
-
-func GenerateCertificate(conf Config) {
-	logger.Printf("Generate certificate %s", conf.OutCertPath)
-
-	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
-	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
+func GenerateOutFilesFromRequest(req CertificateRequest) {
+	logger.Errorf("Generate key %s", req.OutKeyPath)
+	publicKey, err := GenerateKey(req)
 	if err != nil {
-		logger.Errorf("Failed to generate serial number: %v", err)
+		logError(err)
 		return
 	}
 
-	template := &x509.Certificate{
-		Subject: pkix.Name{
-			CommonName:         conf.CommonName,
-			Country:            conf.Countries,
-			Organization:       conf.Organizations,
-			OrganizationalUnit: conf.OrganizationalUnits,
-			Locality:           conf.Localities,
-			Province:           conf.Provinces,
-			StreetAddress:      conf.StreetAddresses,
-			PostalCode:         conf.PostalCodes,
-		},
-		SerialNumber: serialNumber,
-		NotBefore:    time.Now(),
-		NotAfter:     time.Now().Add(conf.Duration),
-		KeyUsage:     x509.KeyUsageDigitalSignature,
-		ExtKeyUsage:  conf.ExtKeyUsages,
-		DNSNames:     conf.DNSNames,
-		IPAddresses:  conf.IPAddresses,
-	}
-
-	key, err := rsa.GenerateKey(rand.Reader, 4096)
-	if err != nil {
-		logger.Errorf("Failed to generate private key: %v", err)
+	logger.Errorf("Generate certificate %s", req.OutCertPath)
+	if err := GenerateCertificate(req, publicKey); err != nil {
+		logError(err)
 		return
 	}
 
-	certBytes, err := x509.CreateCertificate(rand.Reader, template, ca, key.Public(), caKey)
-	if err != nil {
-		logger.Errorf("Failed to create certificate: %v", err)
-		return
-	}
-
-	pemCertFile, err := os.Create(conf.OutCertPath)
-	if err != nil {
-		logger.Errorf("Failed to create certificate file handler %s: %v", conf.OutCertPath, err)
-		return
-	}
-	defer pemCertFile.Close()
-	pemCert := &pem.Block{Type: "CERTIFICATE", Bytes: certBytes}
-	err = pem.Encode(pemCertFile, pemCert)
-	if err != nil {
-		logger.Errorf("Failed to write certificate to file %s: %v", conf.OutCertPath, err)
-		return
-	}
-
-	pemKeyFile, err := os.Create(conf.OutKeyPath)
-	if err != nil {
-		logger.Errorf("Failed to create key file handler %s: %v", conf.OutKeyPath, err)
-		return
-	}
-	defer pemKeyFile.Close()
-	pemKey := &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(key)}
-	err = pem.Encode(pemKeyFile, pemKey)
-	if err != nil {
-		logger.Errorf("Failed to write key to file %s: %v", conf.OutKeyPath, err)
-		return
-	}
-
-	pemCAFile, err := os.Create(conf.OutCAPath)
-	if err != nil {
-		logger.Errorf("Failed to create CA file handler %s: %v", conf.OutCAPath, err)
-		return
-	}
-	defer pemCAFile.Close()
-	pemCA := &pem.Block{Type: "CERTIFICATE", Bytes: ca.Raw}
-	err = pem.Encode(pemCAFile, pemCA)
-	if err != nil {
-		logger.Errorf("Failed to write CA to file %s: %v", conf.OutCAPath, err)
+	logger.Errorf("Copy CA to %s", req.OutCAPath)
+	if err := CopyCA(req); err != nil {
+		logError(err)
 		return
 	}
 }
 
-func loadCert(path string) (*x509.Certificate, error) {
-	b, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-
-	certPEMBlock, _ := pem.Decode(b)
-	if certPEMBlock == nil || certPEMBlock.Type != "CERTIFICATE" {
-		return nil, ErrInvalidPEMBlock
-	}
-
-	x509Cert, err := x509.ParseCertificate(certPEMBlock.Bytes)
-	if err != nil {
-		return nil, err
-	}
-
-	return x509Cert, nil
+func logError(err error) {
+	logger.Errorf("Failure: %v", err)
 }

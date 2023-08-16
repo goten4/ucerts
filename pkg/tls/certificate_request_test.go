@@ -13,9 +13,9 @@ import (
 	"github.com/goten4/ucerts/internal/config"
 )
 
-func TestLoadConfig(t *testing.T) {
+func TestLoadCertificateRequest(t *testing.T) {
 	viper.Reset()
-	expected := Config{
+	expected := CertificateRequest{
 		OutCertPath:         "testdata/tls/server.crt",
 		OutKeyPath:          "testdata/tls/key.pem",
 		OutCAPath:           "testdata/tls/ca.pem",
@@ -34,13 +34,13 @@ func TestLoadConfig(t *testing.T) {
 		IPAddresses:         []net.IP{net.IPv4(127, 0, 0, 1), net.IPv4(127, 0, 1, 1)},
 	}
 
-	actual, err := LoadConfig("testdata/valid.yaml")
+	actual, err := LoadCertificateRequest("testdata/valid.yaml")
 
 	require.NoError(t, err)
 	assert.Equal(t, expected, actual)
 }
 
-func TestLoadConfig_WithDefaultValues(t *testing.T) {
+func TestLoadCertificateRequest_WithDefaultValues(t *testing.T) {
 	viper.Reset()
 	config.DefaultCountries = []string{"DEF"}
 	config.DefaultOrganizations = []string{"default O"}
@@ -49,7 +49,7 @@ func TestLoadConfig_WithDefaultValues(t *testing.T) {
 	config.DefaultProvinces = []string{"default P"}
 	config.DefaultStreetAddresses = []string{"default SA"}
 	config.DefaultPostalCodes = []string{"3220"}
-	expected := Config{
+	expected := CertificateRequest{
 		OutCertPath:         "testdata/tls/tls.crt",
 		OutKeyPath:          "testdata/tls/tls.key",
 		OutCAPath:           "testdata/tls/ca.crt",
@@ -66,51 +66,51 @@ func TestLoadConfig_WithDefaultValues(t *testing.T) {
 		ExtKeyUsages:        []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 	}
 
-	actual, err := LoadConfig("testdata/valid-defaults.yaml")
+	actual, err := LoadCertificateRequest("testdata/valid-defaults.yaml")
 
 	require.NoError(t, err)
 	assert.Equal(t, expected, actual)
 }
 
-func TestLoadConfig_WithErrors(t *testing.T) {
+func TestLoadCertificateRequest_WithErrors(t *testing.T) {
 	for name, tt := range map[string]struct {
-		configFile    string
-		expectedError error
+		certificateRequestFile string
+		expectedError          error
 	}{
 		"Unknown file": {
-			configFile:    "unknown",
-			expectedError: ErrOpenConfigFile,
+			certificateRequestFile: "unknown",
+			expectedError:          ErrOpenCertificateRequestFile,
 		},
 		"Missing out.dir": {
-			configFile:    "testdata/missing-outdir.yaml",
-			expectedError: ErrMissingMandatoryField,
+			certificateRequestFile: "testdata/missing-outdir.yaml",
+			expectedError:          ErrMissingMandatoryField,
 		},
 		"Invalid extension": {
-			configFile:    "testdata/invalid.ext",
-			expectedError: config.ErrInvalidExtension,
+			certificateRequestFile: "testdata/invalid.ext",
+			expectedError:          config.ErrInvalidExtension,
 		},
 		"Invalid file": {
-			configFile:    "testdata/invalid.yaml",
-			expectedError: ErrReadConfigFile,
+			certificateRequestFile: "testdata/invalid.yaml",
+			expectedError:          ErrReadCertificateRequestFile,
 		},
 		"Invalid key usages": {
-			configFile:    "testdata/invalid-keyusages.yaml",
-			expectedError: ErrInvalidKeyUsages,
+			certificateRequestFile: "testdata/invalid-keyusage.yaml",
+			expectedError:          ErrInvalidKeyUsages,
 		},
 		"Missing key usage": {
-			configFile:    "testdata/missing-keyusages.yaml",
-			expectedError: ErrMissingMandatoryField,
+			certificateRequestFile: "testdata/missing-keyusages.yaml",
+			expectedError:          ErrMissingMandatoryField,
 		},
 		"Invalid IP address": {
-			configFile:    "testdata/invalid-ipaddresses.yaml",
-			expectedError: ErrInvalidIPAddress,
+			certificateRequestFile: "testdata/invalid-ipaddresses.yaml",
+			expectedError:          ErrInvalidIPAddress,
 		},
 	} {
 		tc := tt // Use local variable to avoid closure-caused race condition
 		t.Run(name, func(t *testing.T) {
 			viper.Reset()
 
-			_, err := LoadConfig(tc.configFile)
+			_, err := LoadCertificateRequest(tc.certificateRequestFile)
 
 			assert.ErrorIs(t, err, tc.expectedError)
 		})

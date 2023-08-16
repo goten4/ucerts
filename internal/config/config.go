@@ -16,7 +16,7 @@ import (
 const (
 	KeyShutdownTimeout            = "shutdown.timeout"
 	KeyInterval                   = "interval"
-	KeyTLSConfigPaths             = "tls.configPaths"
+	KeyCertificateRequestsPaths   = "certificateRequests.paths"
 	KeyCAPath                     = "caPath"
 	KeyCAKeyPath                  = "caKeyPath"
 	KeyDefaultCountries           = "default.countries"
@@ -31,7 +31,7 @@ const (
 var (
 	ShutdownTimeout            time.Duration
 	Interval                   time.Duration
-	TLSConfigPaths             []string
+	CertificateRequestsPaths   []string
 	CAPath                     string
 	CAKeyPath                  string
 	DefaultCountries           []string
@@ -71,7 +71,7 @@ func Init() {
 
 	ShutdownTimeout = viper.GetDuration(KeyShutdownTimeout)
 	Interval = viper.GetDuration(KeyInterval)
-	TLSConfigPaths = viper.GetStringSlice(KeyTLSConfigPaths)
+	CertificateRequestsPaths = viper.GetStringSlice(KeyCertificateRequestsPaths)
 	CAPath = viper.GetString(KeyCAPath)
 	CAKeyPath = viper.GetString(KeyCAKeyPath)
 	DefaultCountries = viper.GetStringSlice(KeyDefaultCountries)
@@ -83,8 +83,8 @@ func Init() {
 	DefaultPostalCodes = viper.GetStringSlice(KeyDefaultPostalCodes)
 
 	const errMissingFormat = "Error in configuration: %s must be set"
-	if len(TLSConfigPaths) == 0 {
-		logger.Failf(errMissingFormat, KeyTLSConfigPaths)
+	if len(CertificateRequestsPaths) == 0 {
+		logger.Failf(errMissingFormat, KeyCertificateRequestsPaths)
 	}
 	if CAPath == "" {
 		logger.Failf(errMissingFormat, KeyCAPath)

@@ -38,14 +38,20 @@ const (
 )
 
 var (
-	ErrOpenConfigFile        = errors.New("open file")
-	ErrReadConfigFile        = errors.New("read file")
-	ErrInvalidKeyUsages      = errors.New("invalid key usages")
-	ErrInvalidIPAddress      = errors.New("invalid ip addresses")
-	ErrMissingMandatoryField = errors.New("missing mandatory field")
+	ErrOpenCertificateRequestFile = errors.New("open file")
+	ErrReadCertificateRequestFile = errors.New("read file")
+	ErrInvalidKeyUsages           = errors.New("invalid key usages")
+	ErrInvalidIPAddress           = errors.New("invalid ip addresses")
+	ErrMissingMandatoryField      = errors.New("missing mandatory field")
 )
 
-type Config struct {
+type PrivateKey struct {
+	Encoding  func()
+	Algorithm func()
+	Size      int
+}
+
+type CertificateRequest struct {
 	OutCertPath         string
 	OutKeyPath          string
 	OutCAPath           string
@@ -62,21 +68,22 @@ type Config struct {
 	ExtKeyUsages        []x509.ExtKeyUsage
 	DNSNames            []string
 	IPAddresses         []net.IP
+	PrivateKey          PrivateKey
 }
 
-func LoadConfig(path string) (Config, error) {
+func LoadCertificateRequest(path string) (CertificateRequest, error) {
 	conf := viper.New()
 	file, err := os.Open(path)
 	if err != nil {
-		return Config{}, fmt.Errorf(format.WrapErrors, ErrOpenConfigFile, err)
+		return CertificateRequest{}, fmt.Errorf(format.WrapErrors, ErrOpenCertificateRequestFile, err)
 	}
 	ext, err := config.GetExtension(path)
 	if err != nil {
-		return Config{}, err
+		return CertificateRequest{}, err
 	}
 	conf.SetConfigType(ext)
 	if err := conf.ReadConfig(file); err != nil {
-		return Config{}, fmt.Errorf(format.WrapErrors, ErrReadConfigFile, err)
+		return CertificateRequest{}, fmt.Errorf(format.WrapErrors, ErrReadCertificateRequestFile, err)
 	}
 
 	conf.SetDefault(KeyOutCert, "tls.crt")
@@ -92,10 +99,10 @@ func LoadConfig(path string) (Config, error) {
 
 	outDir := conf.GetString(KeyOutDir)
 	if outDir == "" {
-		return Config{}, fmt.Errorf(format.WrapErrorString, ErrMissingMandatoryField, KeyOutDir)
+		return CertificateRequest{}, fmt.Errorf(format.WrapErrorString, ErrMissingMandatoryField, KeyOutDir)
 	}
 
-	tlsConf := Config{
+	tlsConf := CertificateRequest{
 		OutCertPath:         filepath.Join(outDir, conf.GetString(KeyOutCert)),
 		OutKeyPath:          filepath.Join(outDir, conf.GetString(KeyOutKey)),
 		OutCAPath:           filepath.Join(outDir, conf.GetString(KeyOutCA)),
@@ -114,12 +121,12 @@ func LoadConfig(path string) (Config, error) {
 	for _, s := range conf.GetStringSlice(KeyExtKeyUsages) {
 		extKeyUsage, err := findExtKeyUsage(s)
 		if err != nil {
-			return Config{}, fmt.Errorf(format.WrapErrorString, ErrInvalidKeyUsages, s)
+			return CertificateRequest{}, fmt.Errorf(format.WrapErrorString, ErrInvalidKeyUsages, s)
 		}
 		tlsConf.ExtKeyUsages = append(tlsConf.ExtKeyUsages, extKeyUsage)
 	}
 	if len(tlsConf.ExtKeyUsages) == 0 {
-		return Config{}, fmt.Errorf(format.WrapErrorString, ErrMissingMandatoryField, KeyExtKeyUsages)
+		return CertificateRequest{}, fmt.Errorf(format.WrapErrorString, ErrMissingMandatoryField, KeyExtKeyUsages)
 	}
 
 	for _, dnsName := range conf.GetStringSlice(KeyDNSNames) {
@@ -129,7 +136,7 @@ func LoadConfig(path string) (Config, error) {
 	for _, s := range conf.GetStringSlice(KeyIPAddresses) {
 		ipAddr := net.ParseIP(s)
 		if ipAddr == nil {
-			return Config{}, fmt.Errorf(format.WrapErrorString, ErrInvalidIPAddress, s)
+			return CertificateRequest{}, fmt.Errorf(format.WrapErrorString, ErrInvalidIPAddress, s)
 		}
 		tlsConf.IPAddresses = append(tlsConf.IPAddresses, ipAddr)
 	}
