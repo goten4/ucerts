@@ -14,33 +14,33 @@ import (
 )
 
 const (
-	KeyShutdownTimeout           = "shutdown.timeout"
-	KeyInterval                  = "interval"
-	KeyTLSConfigPaths            = "tls.configPaths"
-	KeyCAPath                    = "caPath"
-	KeyCAKeyPath                 = "caKeyPath"
-	KeyDefaultCountry            = "default.country"
-	KeyDefaultOrganization       = "default.organization"
-	KeyDefaultOrganizationalUnit = "default.organizationalUnit"
-	KeyDefaultLocality           = "default.locality"
-	KeyDefaultProvince           = "default.province"
-	KeyDefaultStreetAddress      = "default.streetAddress"
-	KeyDefaultPostalCode         = "default.postalCode"
+	KeyShutdownTimeout            = "shutdown.timeout"
+	KeyInterval                   = "interval"
+	KeyTLSConfigPaths             = "tls.configPaths"
+	KeyCAPath                     = "caPath"
+	KeyCAKeyPath                  = "caKeyPath"
+	KeyDefaultCountries           = "default.countries"
+	KeyDefaultOrganizations       = "default.organizations"
+	KeyDefaultOrganizationalUnits = "default.organizationalUnits"
+	KeyDefaultLocalities          = "default.localities"
+	KeyDefaultProvinces           = "default.provinces"
+	KeyDefaultStreetAddresses     = "default.streetAddresses"
+	KeyDefaultPostalCodes         = "default.postalCodes"
 )
 
 var (
-	ShutdownTimeout           time.Duration
-	Interval                  time.Duration
-	TLSConfigPaths            []string
-	CAPath                    string
-	CAKeyPath                 string
-	DefaultCountry            string
-	DefaultOrganization       string
-	DefaultOrganizationalUnit string
-	DefaultLocality           string
-	DefaultProvince           string
-	DefaultStreetAddress      string
-	DefaultPostalCode         string
+	ShutdownTimeout            time.Duration
+	Interval                   time.Duration
+	TLSConfigPaths             []string
+	CAPath                     string
+	CAKeyPath                  string
+	DefaultCountries           []string
+	DefaultOrganizations       []string
+	DefaultOrganizationalUnits []string
+	DefaultLocalities          []string
+	DefaultProvinces           []string
+	DefaultStreetAddresses     []string
+	DefaultPostalCodes         []string
 
 	ErrInvalidExtension = errors.New("invalid extension")
 )
@@ -74,13 +74,13 @@ func Init() {
 	TLSConfigPaths = viper.GetStringSlice(KeyTLSConfigPaths)
 	CAPath = viper.GetString(KeyCAPath)
 	CAKeyPath = viper.GetString(KeyCAKeyPath)
-	DefaultCountry = viper.GetString(KeyDefaultCountry)
-	DefaultOrganization = viper.GetString(KeyDefaultOrganization)
-	DefaultOrganizationalUnit = viper.GetString(KeyDefaultOrganizationalUnit)
-	DefaultLocality = viper.GetString(KeyDefaultLocality)
-	DefaultProvince = viper.GetString(KeyDefaultProvince)
-	DefaultStreetAddress = viper.GetString(KeyDefaultStreetAddress)
-	DefaultPostalCode = viper.GetString(KeyDefaultPostalCode)
+	DefaultCountries = viper.GetStringSlice(KeyDefaultCountries)
+	DefaultOrganizations = viper.GetStringSlice(KeyDefaultOrganizations)
+	DefaultOrganizationalUnits = viper.GetStringSlice(KeyDefaultOrganizationalUnits)
+	DefaultLocalities = viper.GetStringSlice(KeyDefaultLocalities)
+	DefaultProvinces = viper.GetStringSlice(KeyDefaultProvinces)
+	DefaultStreetAddresses = viper.GetStringSlice(KeyDefaultStreetAddresses)
+	DefaultPostalCodes = viper.GetStringSlice(KeyDefaultPostalCodes)
 
 	const errMissingFormat = "Error in configuration: %s must be set"
 	if len(TLSConfigPaths) == 0 {

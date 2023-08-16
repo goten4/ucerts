@@ -6,7 +6,7 @@ import (
 	"github.com/goten4/ucerts/internal/config"
 	"github.com/goten4/ucerts/internal/funcs"
 	"github.com/goten4/ucerts/internal/logger"
-	"github.com/goten4/ucerts/tls"
+	"github.com/goten4/ucerts/pkg/tls"
 )
 
 var (

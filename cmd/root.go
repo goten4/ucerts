@@ -11,7 +11,7 @@ import (
 	"github.com/goten4/ucerts/internal/daemon"
 	"github.com/goten4/ucerts/internal/logger"
 	"github.com/goten4/ucerts/internal/watcher"
-	"github.com/goten4/ucerts/tls"
+	"github.com/goten4/ucerts/pkg/tls"
 )
 
 func Execute() {

@@ -5,7 +5,7 @@ tls:
 caPath: example/tls/config/ca.crt
 caKeyPath: example/tls/config/ca.key
 default:
-  country: FR
-  province: France
-  organization: uCerts
-  locality: Bordeaux
+  countries: FR
+  provinces: France
+  organizations: uCerts
+  localities: Bordeaux

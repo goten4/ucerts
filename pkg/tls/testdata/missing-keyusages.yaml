@@ -1,0 +1,5 @@
+out:
+  dir: testdata/tls
+commonName: test
+duration: 12345h
+renewBefore: 123h

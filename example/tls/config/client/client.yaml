@@ -3,5 +3,5 @@ out:
 commonName: client
 duration: 7d
 renewBefore: 6d
-extKeyUsage:
+extKeyUsages:
   - client auth

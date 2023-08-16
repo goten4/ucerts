@@ -3,7 +3,7 @@ out:
 commonName: localhost
 duration: 365d
 renewBefore: 31d
-extKeyUsage:
+extKeyUsages:
   - server auth
 dnsNames:
   - localhost
