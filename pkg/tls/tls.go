@@ -168,6 +168,19 @@ func GenerateCertificate(conf Config) {
 		logger.Errorf("Failed to write key to file %s: %v", conf.OutKeyPath, err)
 		return
 	}
+
+	pemCAFile, err := os.Create(conf.OutCAPath)
+	if err != nil {
+		logger.Errorf("Failed to create CA file handler %s: %v", conf.OutCAPath, err)
+		return
+	}
+	defer pemCAFile.Close()
+	pemCA := &pem.Block{Type: "CERTIFICATE", Bytes: ca.Raw}
+	err = pem.Encode(pemCAFile, pemCA)
+	if err != nil {
+		logger.Errorf("Failed to write CA to file %s: %v", conf.OutCAPath, err)
+		return
+	}
 }
 
 func loadCert(path string) (*x509.Certificate, error) {
