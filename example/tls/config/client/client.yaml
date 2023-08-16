@@ -1,0 +1,7 @@
+out:
+  dir: example/tls/certs/client
+commonName: client
+duration: 7d
+renewBefore: 6d
+extKeyUsage:
+  - client auth

@@ -1,0 +1,11 @@
+out:
+  dir: example/tls/certs/server
+commonName: localhost
+duration: 365d
+renewBefore: 31d
+extKeyUsage:
+  - server auth
+dnsNames:
+  - localhost
+ipAddresses:
+  - 127.0.0.1

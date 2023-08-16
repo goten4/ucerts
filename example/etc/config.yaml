@@ -1,0 +1,11 @@
+tls:
+  configPaths:
+    - example/tls/config/client
+    - example/tls/config/server
+caPath: example/tls/config/ca.crt
+caKeyPath: example/tls/config/ca.key
+default:
+  country: FR
+  province: France
+  organization: uCerts
+  locality: Bordeaux
