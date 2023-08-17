@@ -23,6 +23,9 @@ var (
 )
 
 func LoadIssuer(path IssuerPath) (*Issuer, error) {
+	if path.PublicKey == "" || path.PrivateKey == "" {
+		return nil, nil
+	}
 	rootCA, err := tls.LoadX509KeyPair(path.PublicKey, path.PrivateKey)
 	if err != nil {
 		return nil, fmt.Errorf(format.WrapErrors, ErrLoadIssuerKeyPair, err)

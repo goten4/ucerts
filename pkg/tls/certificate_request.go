@@ -22,6 +22,7 @@ const (
 	KeyOutKey              = "out.key"
 	KeyOutCA               = "out.ca"
 	KeyCommonName          = "commonName"
+	KeyIsCA                = "isCA"
 	KeyDuration            = "duration"
 	KeyRenewBefore         = "renewBefore"
 	KeyExtKeyUsages        = "extKeyUsages"
@@ -64,6 +65,7 @@ type CertificateRequest struct {
 	OutKeyPath          string
 	OutCAPath           string
 	CommonName          string
+	IsCA                bool
 	Countries           []string
 	Organizations       []string
 	OrganizationalUnits []string
@@ -114,17 +116,19 @@ func LoadCertificateRequest(path string) (CertificateRequest, error) {
 	}
 
 	issuerDir := conf.GetString(KeyIssuerDir)
-	if issuerDir == "" {
-		return CertificateRequest{}, fmt.Errorf(format.WrapErrorString, ErrMissingMandatoryField, KeyIssuerDir)
+	var issuerPath IssuerPath
+	if issuerDir != "" {
+		issuerPubKeyPath := filepath.Join(issuerDir, conf.GetString(KeyIssuerPublicKey))
+		issuerPrivKeyPath := filepath.Join(issuerDir, conf.GetString(KeyIssuerPrivateKey))
+		issuerPath = IssuerPath{PublicKey: issuerPubKeyPath, PrivateKey: issuerPrivKeyPath}
 	}
-	issuerPubKeyPath := filepath.Join(issuerDir, conf.GetString(KeyIssuerPublicKey))
-	issuerPrivKeyPath := filepath.Join(issuerDir, conf.GetString(KeyIssuerPrivateKey))
 
-	tlsConf := CertificateRequest{
+	req := CertificateRequest{
 		OutCertPath:         filepath.Join(outDir, conf.GetString(KeyOutCert)),
 		OutKeyPath:          filepath.Join(outDir, conf.GetString(KeyOutKey)),
 		OutCAPath:           filepath.Join(outDir, conf.GetString(KeyOutCA)),
 		CommonName:          conf.GetString(KeyCommonName),
+		IsCA:                conf.GetBool(KeyIsCA),
 		Countries:           conf.GetStringSlice(KeyCountries),
 		Organizations:       conf.GetStringSlice(KeyOrganizations),
 		OrganizationalUnits: conf.GetStringSlice(KeyOrganizationalUnits),
@@ -135,7 +139,7 @@ func LoadCertificateRequest(path string) (CertificateRequest, error) {
 		Duration:            conf.GetDuration(KeyDuration),
 		RenewBefore:         conf.GetDuration(KeyRenewBefore),
 		PrivateKey:          PrivateKey{Algorithm: conf.GetString(KeyPrivateKeyAlgorithm), Size: conf.GetInt(KeyPrivateKeySize)},
-		IssuerPath:          IssuerPath{PublicKey: issuerPubKeyPath, PrivateKey: issuerPrivKeyPath},
+		IssuerPath:          issuerPath,
 	}
 
 	for _, s := range conf.GetStringSlice(KeyExtKeyUsages) {
@@ -143,14 +147,11 @@ func LoadCertificateRequest(path string) (CertificateRequest, error) {
 		if err != nil {
 			return CertificateRequest{}, fmt.Errorf(format.WrapErrorString, ErrInvalidKeyUsages, s)
 		}
-		tlsConf.ExtKeyUsages = append(tlsConf.ExtKeyUsages, extKeyUsage)
-	}
-	if len(tlsConf.ExtKeyUsages) == 0 {
-		return CertificateRequest{}, fmt.Errorf(format.WrapErrorString, ErrMissingMandatoryField, KeyExtKeyUsages)
+		req.ExtKeyUsages = append(req.ExtKeyUsages, extKeyUsage)
 	}
 
 	for _, dnsName := range conf.GetStringSlice(KeyDNSNames) {
-		tlsConf.DNSNames = append(tlsConf.DNSNames, dnsName)
+		req.DNSNames = append(req.DNSNames, dnsName)
 	}
 
 	for _, s := range conf.GetStringSlice(KeyIPAddresses) {
@@ -158,10 +159,10 @@ func LoadCertificateRequest(path string) (CertificateRequest, error) {
 		if ipAddr == nil {
 			return CertificateRequest{}, fmt.Errorf(format.WrapErrorString, ErrInvalidIPAddress, s)
 		}
-		tlsConf.IPAddresses = append(tlsConf.IPAddresses, ipAddr)
+		req.IPAddresses = append(req.IPAddresses, ipAddr)
 	}
 
-	return tlsConf, nil
+	return req, nil
 }
 
 func findExtKeyUsage(s string) (x509.ExtKeyUsage, error) {

@@ -1,8 +1,8 @@
 out:
   dir: example/tls/certs/server
 commonName: localhost
-duration: 365d
-renewBefore: 31d
+duration: 8760h # 1 year
+renewBefore: 720h # 1 month
 extKeyUsages:
   - server auth
 dnsNames:
@@ -13,4 +13,4 @@ privateKey:
   algorithm: ecdsa
   size: 384
 issuer:
-  dir: example/tls/ca
+  dir: example/tls/certs/ca

@@ -26,6 +26,7 @@ func HandleCertificateRequestFile(file string) {
 	logger.Printf("Handle certificate request %s", file)
 	req, err := LoadCertificateRequest(file)
 	if err != nil {
+		logger.Errorf("Failed to load certificate request: %v", err)
 		return
 	}
 
@@ -50,8 +51,8 @@ func HandleCertificateRequestFile(file string) {
 		return
 	}
 
-	if cert.NotAfter.After(time.Now()) {
-		logger.Printf("Expired certificate %s", req.OutCertPath, err)
+	if cert.NotAfter.Before(time.Now()) {
+		logger.Printf("Expired certificate %s", req.OutCertPath)
 		GenerateOutFilesFromRequest(req, issuer)
 		return
 	}
@@ -59,22 +60,24 @@ func HandleCertificateRequestFile(file string) {
 
 func GenerateOutFilesFromRequest(req CertificateRequest, issuer *Issuer) {
 	logger.Printf("Generate key %s", req.OutKeyPath)
-	publicKey, err := GeneratePrivateKey(req)
+	key, err := GeneratePrivateKey(req)
 	if err != nil {
 		logError(err)
 		return
 	}
 
 	logger.Printf("Generate certificate %s", req.OutCertPath)
-	if err := GenerateCertificate(req, publicKey, issuer); err != nil {
+	if err := GenerateCertificate(req, key, issuer); err != nil {
 		logError(err)
 		return
 	}
 
-	logger.Printf("Copy CA to %s", req.OutCAPath)
-	if err := CopyCA(issuer, req.OutCAPath); err != nil {
-		logError(err)
-		return
+	if issuer != nil {
+		logger.Printf("Copy CA to %s", req.OutCAPath)
+		if err := CopyCA(issuer, req.OutCAPath); err != nil {
+			logError(err)
+			return
+		}
 	}
 }
 

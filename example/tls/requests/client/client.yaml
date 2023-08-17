@@ -1,9 +1,9 @@
 out:
   dir: example/tls/certs/client
 commonName: client
-duration: 7d
-renewBefore: 6d
+duration: 168h # 7 days
+renewBefore: 144h # 6 days
 extKeyUsages:
   - client auth
 issuer:
-  dir: example/tls/ca
+  dir: example/tls/certs/ca

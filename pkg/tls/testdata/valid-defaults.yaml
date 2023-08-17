@@ -5,5 +5,3 @@ duration: 12345h
 renewBefore: 123h
 extKeyUsages:
   - server auth
-issuer:
-  dir: testdata

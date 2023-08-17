@@ -1,5 +1,6 @@
 certificateRequests:
   paths:
+    - example/tls/requests/ca
     - example/tls/requests/client
     - example/tls/requests/server
 default:

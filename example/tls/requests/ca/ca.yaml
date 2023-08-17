@@ -1,0 +1,11 @@
+out:
+  dir: example/tls/certs/ca
+  cert: ca.crt
+  key: ca.key
+commonName: goten4
+duration: 87600h # 10 years
+renewBefore: 8760h # 1 year
+isCA: true
+privateKey:
+  algorithm: rsa
+  size: 4096

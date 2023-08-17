@@ -66,7 +66,6 @@ func TestLoadCertificateRequest_WithDefaultValues(t *testing.T) {
 		Duration:            12345 * time.Hour,
 		RenewBefore:         123 * time.Hour,
 		ExtKeyUsages:        []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
-		IssuerPath:          IssuerPath{PublicKey: "testdata/ca.crt", PrivateKey: "testdata/ca.key"},
 	}
 
 	actual, err := LoadCertificateRequest("testdata/valid-defaults.yaml")
@@ -99,10 +98,6 @@ func TestLoadCertificateRequest_WithErrors(t *testing.T) {
 		"Invalid key usages": {
 			certificateRequestFile: "testdata/invalid-keyusage.yaml",
 			expectedError:          ErrInvalidKeyUsages,
-		},
-		"Missing key usage": {
-			certificateRequestFile: "testdata/missing-keyusages.yaml",
-			expectedError:          ErrMissingMandatoryField,
 		},
 		"Invalid IP address": {
 			certificateRequestFile: "testdata/invalid-ipaddresses.yaml",

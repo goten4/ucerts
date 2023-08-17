@@ -45,13 +45,13 @@ var (
 	ErrUnsupportedECDSAKeySize        = errors.New("unsupported ecdsa key size")
 )
 
-func GeneratePrivateKey(req CertificateRequest) (crypto.PublicKey, error) {
+func GeneratePrivateKey(req CertificateRequest) (crypto.PrivateKey, error) {
 	algorithm := req.PrivateKey.Algorithm
 	if algorithm == "" {
 		algorithm = RSA
 	}
 
-	var key crypto.PublicKey
+	var key crypto.PrivateKey
 	var pemBlock *pem.Block
 	var err error
 
@@ -78,7 +78,7 @@ func GeneratePrivateKey(req CertificateRequest) (crypto.PublicKey, error) {
 	return key, nil
 }
 
-var generateRSAPrivateKey = func(req CertificateRequest) (crypto.PublicKey, *pem.Block, error) {
+var generateRSAPrivateKey = func(req CertificateRequest) (crypto.PrivateKey, *pem.Block, error) {
 	keySize := req.PrivateKey.Size
 	if keySize == 0 {
 		keySize = MinRSAKeySize
@@ -93,10 +93,10 @@ var generateRSAPrivateKey = func(req CertificateRequest) (crypto.PublicKey, *pem
 	if err != nil {
 		return nil, nil, err
 	}
-	return key.Public(), &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(key)}, nil
+	return key, &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(key)}, nil
 }
 
-var generateECPrivateKey = func(req CertificateRequest) (crypto.PublicKey, *pem.Block, error) {
+var generateECPrivateKey = func(req CertificateRequest) (crypto.PrivateKey, *pem.Block, error) {
 	keySize := req.PrivateKey.Size
 	if keySize == 0 {
 		keySize = 256
@@ -124,10 +124,10 @@ var generateECPrivateKey = func(req CertificateRequest) (crypto.PublicKey, *pem.
 		return nil, nil, fmt.Errorf(format.WrapErrors, ErrEncodePrivateKey, err)
 	}
 
-	return key.Public(), &pem.Block{Type: "EC PRIVATE KEY", Bytes: bytes}, nil
+	return key, &pem.Block{Type: "EC PRIVATE KEY", Bytes: bytes}, nil
 }
 
-var generateEd25519PrivateKey = func(req CertificateRequest) (crypto.PublicKey, *pem.Block, error) {
+var generateEd25519PrivateKey = func(req CertificateRequest) (crypto.PrivateKey, *pem.Block, error) {
 	_, key, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
 		return nil, nil, err
@@ -138,16 +138,17 @@ var generateEd25519PrivateKey = func(req CertificateRequest) (crypto.PublicKey, 
 		return nil, nil, fmt.Errorf(format.WrapErrors, ErrEncodePrivateKey, err)
 	}
 
-	return key.Public(), &pem.Block{Type: "PRIVATE KEY", Bytes: bytes}, nil
+	return key, &pem.Block{Type: "PRIVATE KEY", Bytes: bytes}, nil
 }
 
-func GenerateCertificate(req CertificateRequest, key crypto.PublicKey, issuer *Issuer) error {
+func GenerateCertificate(req CertificateRequest, key crypto.PrivateKey, issuer *Issuer) error {
 	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
 	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
 	if err != nil {
 		return fmt.Errorf(format.WrapErrors, ErrGenerateSerialNumber, err)
 	}
 
+	notBefore := time.Now()
 	template := &x509.Certificate{
 		Subject: pkix.Name{
 			CommonName:         req.CommonName,
@@ -159,16 +160,31 @@ func GenerateCertificate(req CertificateRequest, key crypto.PublicKey, issuer *I
 			StreetAddress:      req.StreetAddresses,
 			PostalCode:         req.PostalCodes,
 		},
-		SerialNumber: serialNumber,
-		NotBefore:    time.Now(),
-		NotAfter:     time.Now().Add(req.Duration),
-		KeyUsage:     x509.KeyUsageDigitalSignature,
-		ExtKeyUsage:  req.ExtKeyUsages,
-		DNSNames:     req.DNSNames,
-		IPAddresses:  req.IPAddresses,
+		SerialNumber:          serialNumber,
+		IsCA:                  req.IsCA,
+		NotBefore:             notBefore,
+		NotAfter:              notBefore.Add(req.Duration),
+		KeyUsage:              x509.KeyUsageDigitalSignature,
+		ExtKeyUsage:           req.ExtKeyUsages,
+		DNSNames:              req.DNSNames,
+		IPAddresses:           req.IPAddresses,
+		BasicConstraintsValid: true,
 	}
 
-	certBytes, err := x509.CreateCertificate(rand.Reader, template, issuer.PublicKey, key, issuer.PrivateKey)
+	// If certificate is a CA, force CertSign usage
+	if req.IsCA {
+		template.KeyUsage |= x509.KeyUsageCertSign
+	}
+
+	// Default is selfsigned
+	issuerCert := template
+	signerKey := key
+	if issuer != nil {
+		issuerCert = issuer.PublicKey
+		signerKey = issuer.PrivateKey
+	}
+
+	certBytes, err := x509.CreateCertificate(rand.Reader, template, issuerCert, publicKey(key), signerKey)
 	if err != nil {
 		return fmt.Errorf(format.WrapErrors, ErrGenerateCert, err)
 	}
@@ -180,6 +196,19 @@ func GenerateCertificate(req CertificateRequest, key crypto.PublicKey, issuer *I
 	}
 
 	return nil
+}
+
+func publicKey(priv any) any {
+	switch k := priv.(type) {
+	case *rsa.PrivateKey:
+		return &k.PublicKey
+	case *ecdsa.PrivateKey:
+		return &k.PublicKey
+	case ed25519.PrivateKey:
+		return k.Public().(ed25519.PublicKey)
+	default:
+		return nil
+	}
 }
 
 func CopyCA(issuer *Issuer, path string) error {
