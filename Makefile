@@ -3,7 +3,7 @@ SHELL=/bin/bash -o pipefail
 RED := \033[31m
 GREEN := \033[32m
 NC := \033[m
-VERSION = v0.4.0
+VERSION = v0.1.0
 BUILD_TIME ?= $(shell date +%FT%T%z)
 GO_TEST_FLAGS ?= -race
 GO_BUILD_FLAGS += -tags timetzdata
@@ -23,4 +23,7 @@ build:
 
 cover: override GO_TEST_FLAGS += -coverprofile=coverage.out
 cover: test
-	go tool cover -html=coverage.out &
+	@go tool cover -html=coverage.out &
+
+release:
+	@unset GITLAB_TOKEN && goreleaser release --clean
