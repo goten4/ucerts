@@ -5,3 +5,5 @@ duration: 12345h
 renewBefore: 123h
 extKeyUsages:
   - invalid
+issuer:
+  dir: testdata

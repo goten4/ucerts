@@ -36,6 +36,9 @@ const (
 	KeyPostalCodes         = "subject.postalCodes"
 	KeyPrivateKeyAlgorithm = "privateKey.algorithm"
 	KeyPrivateKeySize      = "privateKey.size"
+	KeyIssuerDir           = "issuer.dir"
+	KeyIssuerPublicKey     = "issuer.publicKey"
+	KeyIssuerPrivateKey    = "issuer.privateKey"
 )
 
 var (
@@ -49,6 +52,11 @@ var (
 type PrivateKey struct {
 	Algorithm string
 	Size      int
+}
+
+type IssuerPath struct {
+	PublicKey  string
+	PrivateKey string
 }
 
 type CertificateRequest struct {
@@ -69,6 +77,7 @@ type CertificateRequest struct {
 	DNSNames            []string
 	IPAddresses         []net.IP
 	PrivateKey          PrivateKey
+	IssuerPath          IssuerPath
 }
 
 func LoadCertificateRequest(path string) (CertificateRequest, error) {
@@ -96,11 +105,20 @@ func LoadCertificateRequest(path string) (CertificateRequest, error) {
 	conf.SetDefault(KeyProvinces, config.DefaultProvinces)
 	conf.SetDefault(KeyStreetAddresses, config.DefaultStreetAddresses)
 	conf.SetDefault(KeyPostalCodes, config.DefaultPostalCodes)
+	conf.SetDefault(KeyIssuerPublicKey, "ca.crt")
+	conf.SetDefault(KeyIssuerPrivateKey, "ca.key")
 
 	outDir := conf.GetString(KeyOutDir)
 	if outDir == "" {
 		return CertificateRequest{}, fmt.Errorf(format.WrapErrorString, ErrMissingMandatoryField, KeyOutDir)
 	}
+
+	issuerDir := conf.GetString(KeyIssuerDir)
+	if issuerDir == "" {
+		return CertificateRequest{}, fmt.Errorf(format.WrapErrorString, ErrMissingMandatoryField, KeyIssuerDir)
+	}
+	issuerPubKeyPath := filepath.Join(issuerDir, conf.GetString(KeyIssuerPublicKey))
+	issuerPrivKeyPath := filepath.Join(issuerDir, conf.GetString(KeyIssuerPrivateKey))
 
 	tlsConf := CertificateRequest{
 		OutCertPath:         filepath.Join(outDir, conf.GetString(KeyOutCert)),
@@ -117,6 +135,7 @@ func LoadCertificateRequest(path string) (CertificateRequest, error) {
 		Duration:            conf.GetDuration(KeyDuration),
 		RenewBefore:         conf.GetDuration(KeyRenewBefore),
 		PrivateKey:          PrivateKey{Algorithm: conf.GetString(KeyPrivateKeyAlgorithm), Size: conf.GetInt(KeyPrivateKeySize)},
+		IssuerPath:          IssuerPath{PublicKey: issuerPubKeyPath, PrivateKey: issuerPrivKeyPath},
 	}
 
 	for _, s := range conf.GetStringSlice(KeyExtKeyUsages) {

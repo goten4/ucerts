@@ -20,7 +20,10 @@ import (
 	"github.com/goten4/ucerts/internal/format"
 )
 
-type GeneratePrivateKeyFunc func(int) (crypto.PrivateKey, error)
+type Issuer struct {
+	PublicKey  *x509.Certificate
+	PrivateKey crypto.PrivateKey
+}
 
 const (
 	MinRSAKeySize = 2048
@@ -138,7 +141,7 @@ var generateEd25519PrivateKey = func(req CertificateRequest) (crypto.PublicKey, 
 	return key.Public(), &pem.Block{Type: "PRIVATE KEY", Bytes: bytes}, nil
 }
 
-func GenerateCertificate(req CertificateRequest, publicKey crypto.PublicKey) error {
+func GenerateCertificate(req CertificateRequest, key crypto.PublicKey, issuer *Issuer) error {
 	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
 	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
 	if err != nil {
@@ -165,7 +168,7 @@ func GenerateCertificate(req CertificateRequest, publicKey crypto.PublicKey) err
 		IPAddresses:  req.IPAddresses,
 	}
 
-	certBytes, err := x509.CreateCertificate(rand.Reader, template, ca, publicKey, caKey)
+	certBytes, err := x509.CreateCertificate(rand.Reader, template, issuer.PublicKey, key, issuer.PrivateKey)
 	if err != nil {
 		return fmt.Errorf(format.WrapErrors, ErrGenerateCert, err)
 	}
@@ -179,14 +182,14 @@ func GenerateCertificate(req CertificateRequest, publicKey crypto.PublicKey) err
 	return nil
 }
 
-func CopyCA(req CertificateRequest) error {
-	pemCAFile, err := os.Create(req.OutCAPath)
+func CopyCA(issuer *Issuer, path string) error {
+	pemCAFile, err := os.Create(path)
 	if err != nil {
 		return fmt.Errorf(format.WrapErrors, ErrCopyCA, err)
 	}
 	defer pemCAFile.Close()
 
-	pemCA := &pem.Block{Type: "CERTIFICATE", Bytes: ca.Raw}
+	pemCA := &pem.Block{Type: "CERTIFICATE", Bytes: issuer.PublicKey.Raw}
 	err = pem.Encode(pemCAFile, pemCA)
 	if err != nil {
 		return fmt.Errorf(format.WrapErrors, ErrCopyCA, err)

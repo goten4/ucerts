@@ -17,8 +17,6 @@ const (
 	KeyShutdownTimeout            = "shutdown.timeout"
 	KeyInterval                   = "interval"
 	KeyCertificateRequestsPaths   = "certificateRequests.paths"
-	KeyCAPath                     = "caPath"
-	KeyCAKeyPath                  = "caKeyPath"
 	KeyDefaultCountries           = "default.countries"
 	KeyDefaultOrganizations       = "default.organizations"
 	KeyDefaultOrganizationalUnits = "default.organizationalUnits"
@@ -32,8 +30,6 @@ var (
 	ShutdownTimeout            time.Duration
 	Interval                   time.Duration
 	CertificateRequestsPaths   []string
-	CAPath                     string
-	CAKeyPath                  string
 	DefaultCountries           []string
 	DefaultOrganizations       []string
 	DefaultOrganizationalUnits []string
@@ -72,8 +68,6 @@ func Init() {
 	ShutdownTimeout = viper.GetDuration(KeyShutdownTimeout)
 	Interval = viper.GetDuration(KeyInterval)
 	CertificateRequestsPaths = viper.GetStringSlice(KeyCertificateRequestsPaths)
-	CAPath = viper.GetString(KeyCAPath)
-	CAKeyPath = viper.GetString(KeyCAKeyPath)
 	DefaultCountries = viper.GetStringSlice(KeyDefaultCountries)
 	DefaultOrganizations = viper.GetStringSlice(KeyDefaultOrganizations)
 	DefaultOrganizationalUnits = viper.GetStringSlice(KeyDefaultOrganizationalUnits)
@@ -82,15 +76,8 @@ func Init() {
 	DefaultStreetAddresses = viper.GetStringSlice(KeyDefaultStreetAddresses)
 	DefaultPostalCodes = viper.GetStringSlice(KeyDefaultPostalCodes)
 
-	const errMissingFormat = "Error in configuration: %s must be set"
 	if len(CertificateRequestsPaths) == 0 {
-		logger.Failf(errMissingFormat, KeyCertificateRequestsPaths)
-	}
-	if CAPath == "" {
-		logger.Failf(errMissingFormat, KeyCAPath)
-	}
-	if CAKeyPath == "" {
-		logger.Failf(errMissingFormat, KeyCAKeyPath)
+		logger.Failf("Error in configuration: %s must be set", KeyCertificateRequestsPaths)
 	}
 }
 

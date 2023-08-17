@@ -12,3 +12,5 @@ ipAddresses:
 privateKey:
   algorithm: ecdsa
   size: 384
+issuer:
+  dir: example/tls/ca

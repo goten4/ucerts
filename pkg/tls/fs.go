@@ -1,6 +1,7 @@
 package tls
 
 import (
+	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
 	"errors"
@@ -12,12 +13,27 @@ import (
 )
 
 var (
-	ErrCreateFile       = errors.New("create file")
-	ErrReadFile         = errors.New("read file")
-	ErrParseCertificate = errors.New("parse certificate")
-	ErrEncode           = errors.New("encode")
-	ErrReadDir          = errors.New("read directory")
+	ErrLoadIssuerKeyPair      = errors.New("load issuer key pair")
+	ErrParseIssuerCertificate = errors.New("parse issuer certificate")
+	ErrCreateFile             = errors.New("create file")
+	ErrReadFile               = errors.New("read file")
+	ErrParseCertificate       = errors.New("parse certificate")
+	ErrEncode                 = errors.New("encode")
+	ErrReadDir                = errors.New("read directory")
 )
+
+func LoadIssuer(path IssuerPath) (*Issuer, error) {
+	rootCA, err := tls.LoadX509KeyPair(path.PublicKey, path.PrivateKey)
+	if err != nil {
+		return nil, fmt.Errorf(format.WrapErrors, ErrLoadIssuerKeyPair, err)
+	}
+	caKey := rootCA.PrivateKey
+	ca, err := x509.ParseCertificate(rootCA.Certificate[0])
+	if err != nil {
+		return nil, fmt.Errorf(format.WrapErrors, ErrParseIssuerCertificate, err)
+	}
+	return &Issuer{PublicKey: ca, PrivateKey: caKey}, nil
+}
 
 var WritePemToFile = func(b *pem.Block, file string) error {
 	pemFile, err := os.Create(file)

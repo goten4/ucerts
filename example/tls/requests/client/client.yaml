@@ -5,3 +5,5 @@ duration: 7d
 renewBefore: 6d
 extKeyUsages:
   - client auth
+issuer:
+  dir: example/tls/ca

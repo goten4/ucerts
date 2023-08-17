@@ -35,3 +35,7 @@ ipAddresses:
 privateKey:
   algorithm: ecdsa
   size: 384
+issuer:
+  dir: testdata
+  publicKey: ca.pem
+  privateKey: ca-key.pem

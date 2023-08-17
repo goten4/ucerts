@@ -49,7 +49,6 @@ func printVersion(_ *cobra.Command, _ []string) {
 func run(_ *cobra.Command, _ []string) {
 	defer daemon.Shutdown()
 
-	tls.Init()
 	daemon.PushGracefulStop(tls.Start())
 	daemon.PushGracefulStop(watcher.Start())
 

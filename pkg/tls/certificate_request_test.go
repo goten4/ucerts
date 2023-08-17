@@ -33,6 +33,7 @@ func TestLoadCertificateRequest(t *testing.T) {
 		DNSNames:            []string{"localhost"},
 		IPAddresses:         []net.IP{net.IPv4(127, 0, 0, 1), net.IPv4(127, 0, 1, 1)},
 		PrivateKey:          PrivateKey{Algorithm: "ecdsa", Size: 384},
+		IssuerPath:          IssuerPath{PublicKey: "testdata/ca.pem", PrivateKey: "testdata/ca-key.pem"},
 	}
 
 	actual, err := LoadCertificateRequest("testdata/valid.yaml")
@@ -65,6 +66,7 @@ func TestLoadCertificateRequest_WithDefaultValues(t *testing.T) {
 		Duration:            12345 * time.Hour,
 		RenewBefore:         123 * time.Hour,
 		ExtKeyUsages:        []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		IssuerPath:          IssuerPath{PublicKey: "testdata/ca.crt", PrivateKey: "testdata/ca.key"},
 	}
 
 	actual, err := LoadCertificateRequest("testdata/valid-defaults.yaml")

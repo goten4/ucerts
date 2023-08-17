@@ -1,35 +1,15 @@
 package tls
 
 import (
-	"crypto"
-	"crypto/tls"
-	"crypto/x509"
 	"errors"
 	"time"
 
-	"github.com/goten4/ucerts/internal/config"
 	"github.com/goten4/ucerts/internal/logger"
 )
 
 var (
-	ca                 *x509.Certificate
-	caKey              crypto.PrivateKey
 	ErrInvalidPEMBlock = errors.New("invalid PEM block")
 )
-
-func Init() {
-	rootCA, err := tls.LoadX509KeyPair(config.CAPath, config.CAKeyPath)
-	if err != nil {
-		logger.Failf("Failed to load CA key pair: %v", err)
-		return
-	}
-	caKey = rootCA.PrivateKey
-	ca, err = x509.ParseCertificate(rootCA.Certificate[0])
-	if err != nil {
-		logger.Failf("Failed to parse CA: %v", err)
-		return
-	}
-}
 
 func LoadCertificateRequests(dir string) {
 	files, err := ReadDir(dir)
@@ -49,44 +29,50 @@ func HandleCertificateRequestFile(file string) {
 		return
 	}
 
+	issuer, err := LoadIssuer(req.IssuerPath)
+	if err != nil {
+		logger.Errorf("Invalid issuer: %v", err)
+		return
+	}
+
 	if FileDoesNotExists(req.OutCertPath) {
 		if ok := MakeParentsDirectories(req.OutCertPath); !ok {
 			return
 		}
-		GenerateOutFilesFromRequest(req)
+		GenerateOutFilesFromRequest(req, issuer)
 		return
 	}
 
 	cert, err := LoadCertFromFile(req.OutCertPath)
 	if err != nil {
 		logger.Errorf("Invalid certificate %s: %v", req.OutCertPath, err)
-		GenerateOutFilesFromRequest(req)
+		GenerateOutFilesFromRequest(req, issuer)
 		return
 	}
 
 	if cert.NotAfter.After(time.Now()) {
 		logger.Printf("Expired certificate %s", req.OutCertPath, err)
-		GenerateOutFilesFromRequest(req)
+		GenerateOutFilesFromRequest(req, issuer)
 		return
 	}
 }
 
-func GenerateOutFilesFromRequest(req CertificateRequest) {
-	logger.Errorf("Generate key %s", req.OutKeyPath)
+func GenerateOutFilesFromRequest(req CertificateRequest, issuer *Issuer) {
+	logger.Printf("Generate key %s", req.OutKeyPath)
 	publicKey, err := GeneratePrivateKey(req)
 	if err != nil {
 		logError(err)
 		return
 	}
 
-	logger.Errorf("Generate certificate %s", req.OutCertPath)
-	if err := GenerateCertificate(req, publicKey); err != nil {
+	logger.Printf("Generate certificate %s", req.OutCertPath)
+	if err := GenerateCertificate(req, publicKey, issuer); err != nil {
 		logError(err)
 		return
 	}
 
-	logger.Errorf("Copy CA to %s", req.OutCAPath)
-	if err := CopyCA(req); err != nil {
+	logger.Printf("Copy CA to %s", req.OutCAPath)
+	if err := CopyCA(issuer, req.OutCAPath); err != nil {
 		logError(err)
 		return
 	}

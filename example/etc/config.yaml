@@ -2,8 +2,6 @@ certificateRequests:
   paths:
     - example/tls/requests/client
     - example/tls/requests/server
-caPath: example/tls/requests/ca.crt
-caKeyPath: example/tls/requests/ca.key
 default:
   countries: FR
   provinces: France

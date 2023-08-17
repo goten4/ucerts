@@ -7,3 +7,5 @@ extKeyUsages:
   - server auth
 ipAddresses:
   - invalid
+issuer:
+  dir: testdata
