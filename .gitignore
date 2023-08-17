@@ -1,2 +1,5 @@
 .idea
 ucerts
+coverage.out
+
+dist/

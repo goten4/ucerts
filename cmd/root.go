@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -31,7 +32,7 @@ func Execute() {
 	versionCmd := &cobra.Command{
 		Use:   "version",
 		Short: "print version and exit",
-		Run:   printVersion,
+		Run:   version,
 	}
 
 	rootCmd.AddCommand(versionCmd)
@@ -41,8 +42,9 @@ func Execute() {
 	}
 }
 
-func printVersion(_ *cobra.Command, _ []string) {
-	logger.Print(build.Info())
+func version(_ *cobra.Command, _ []string) {
+	_, _ = fmt.Fprintf(os.Stdout, "Version: %s\n", build.Version)
+	_, _ = fmt.Fprintf(os.Stdout, "Date: %s\n", build.BuiltAt)
 	os.Exit(0)
 }
 

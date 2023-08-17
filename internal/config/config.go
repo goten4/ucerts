@@ -75,10 +75,6 @@ func Init() {
 	DefaultProvinces = viper.GetStringSlice(KeyDefaultProvinces)
 	DefaultStreetAddresses = viper.GetStringSlice(KeyDefaultStreetAddresses)
 	DefaultPostalCodes = viper.GetStringSlice(KeyDefaultPostalCodes)
-
-	if len(CertificateRequestsPaths) == 0 {
-		logger.Failf("Error in configuration: %s must be set", KeyCertificateRequestsPaths)
-	}
 }
 
 func GetExtension(configFile string) (string, error) {
