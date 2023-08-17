@@ -12,9 +12,11 @@ import (
 )
 
 var (
-	ErrCreateFile = errors.New("create file")
-	ErrWriteFile  = errors.New("write file")
-	ErrReadDir    = errors.New("read directory")
+	ErrCreateFile       = errors.New("create file")
+	ErrReadFile         = errors.New("read file")
+	ErrParseCertificate = errors.New("parse certificate")
+	ErrEncode           = errors.New("encode")
+	ErrReadDir          = errors.New("read directory")
 )
 
 func WritePemToFile(b *pem.Block, file string) error {
@@ -25,7 +27,7 @@ func WritePemToFile(b *pem.Block, file string) error {
 	defer func() { _ = pemFile.Close() }()
 	err = pem.Encode(pemFile, b)
 	if err != nil {
-		return fmt.Errorf(format.WrapErrors, ErrWriteFile, err)
+		return fmt.Errorf(format.WrapErrors, ErrEncode, err)
 	}
 	return nil
 }
@@ -33,7 +35,7 @@ func WritePemToFile(b *pem.Block, file string) error {
 func LoadCertFromFile(file string) (*x509.Certificate, error) {
 	b, err := os.ReadFile(file)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf(format.WrapErrors, ErrReadFile, err)
 	}
 
 	certPEMBlock, _ := pem.Decode(b)
@@ -43,7 +45,7 @@ func LoadCertFromFile(file string) (*x509.Certificate, error) {
 
 	x509Cert, err := x509.ParseCertificate(certPEMBlock.Bytes)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf(format.WrapErrors, ErrParseCertificate, err)
 	}
 
 	return x509Cert, nil
