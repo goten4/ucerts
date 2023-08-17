@@ -25,6 +25,7 @@ const (
 	KeyIsCA                = "isCA"
 	KeyDuration            = "duration"
 	KeyRenewBefore         = "renewBefore"
+	KeyKeyUsages           = "keyUsages"
 	KeyExtKeyUsages        = "extKeyUsages"
 	KeyDNSNames            = "dnsNames"
 	KeyIPAddresses         = "ipAddresses"
@@ -46,6 +47,7 @@ var (
 	ErrOpenCertificateRequestFile = errors.New("open file")
 	ErrReadCertificateRequestFile = errors.New("read file")
 	ErrInvalidKeyUsages           = errors.New("invalid key usages")
+	ErrInvalidExtKeyUsages        = errors.New("invalid ext key usages")
 	ErrInvalidIPAddress           = errors.New("invalid ip addresses")
 	ErrMissingMandatoryField      = errors.New("missing mandatory field")
 )
@@ -75,7 +77,8 @@ type CertificateRequest struct {
 	PostalCodes         []string
 	Duration            time.Duration
 	RenewBefore         time.Duration
-	ExtKeyUsages        []x509.ExtKeyUsage
+	KeyUsage            x509.KeyUsage
+	ExtKeyUsage         []x509.ExtKeyUsage
 	DNSNames            []string
 	IPAddresses         []net.IP
 	PrivateKey          PrivateKey
@@ -142,12 +145,20 @@ func LoadCertificateRequest(path string) (CertificateRequest, error) {
 		IssuerPath:          issuerPath,
 	}
 
-	for _, s := range conf.GetStringSlice(KeyExtKeyUsages) {
-		extKeyUsage, err := findExtKeyUsage(s)
+	for _, s := range conf.GetStringSlice(KeyKeyUsages) {
+		keyUsage, err := findKeyUsage(s)
 		if err != nil {
 			return CertificateRequest{}, fmt.Errorf(format.WrapErrorString, ErrInvalidKeyUsages, s)
 		}
-		req.ExtKeyUsages = append(req.ExtKeyUsages, extKeyUsage)
+		req.KeyUsage |= keyUsage
+	}
+
+	for _, s := range conf.GetStringSlice(KeyExtKeyUsages) {
+		extKeyUsage, err := findExtKeyUsage(s)
+		if err != nil {
+			return CertificateRequest{}, fmt.Errorf(format.WrapErrorString, ErrInvalidExtKeyUsages, s)
+		}
+		req.ExtKeyUsage = append(req.ExtKeyUsage, extKeyUsage)
 	}
 
 	for _, dnsName := range conf.GetStringSlice(KeyDNSNames) {
@@ -163,6 +174,30 @@ func LoadCertificateRequest(path string) (CertificateRequest, error) {
 	}
 
 	return req, nil
+}
+
+func findKeyUsage(s string) (x509.KeyUsage, error) {
+	switch strings.ToLower(s) {
+	case "digital signature":
+		return x509.KeyUsageDigitalSignature, nil
+	case "content commitment":
+		return x509.KeyUsageContentCommitment, nil
+	case "key encipherment":
+		return x509.KeyUsageKeyEncipherment, nil
+	case "data encipherment":
+		return x509.KeyUsageDataEncipherment, nil
+	case "key agreement":
+		return x509.KeyUsageKeyAgreement, nil
+	case "cert sign":
+		return x509.KeyUsageCertSign, nil
+	case "crl sign":
+		return x509.KeyUsageCRLSign, nil
+	case "encipher only":
+		return x509.KeyUsageEncipherOnly, nil
+	case "decipher only":
+		return x509.KeyUsageDecipherOnly, nil
+	}
+	return 0, ErrInvalidKeyUsages
 }
 
 func findExtKeyUsage(s string) (x509.ExtKeyUsage, error) {
@@ -196,5 +231,5 @@ func findExtKeyUsage(s string) (x509.ExtKeyUsage, error) {
 	case "microsoft kernel code signing":
 		return x509.ExtKeyUsageMicrosoftKernelCodeSigning, nil
 	}
-	return 0, ErrInvalidKeyUsages
+	return 0, ErrInvalidExtKeyUsages
 }

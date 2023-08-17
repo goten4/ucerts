@@ -148,6 +148,19 @@ func GenerateCertificate(req CertificateRequest, key crypto.PrivateKey, issuer *
 		return fmt.Errorf(format.WrapErrors, ErrGenerateSerialNumber, err)
 	}
 
+	// All certificates should have the DigitalSignature KeyUsage bits set.
+	keyUsage := x509.KeyUsageDigitalSignature
+	// RSA subject keys should have the KeyEncipherment KeyUsage bits set. In
+	// the context of TLS this KeyUsage is particular to RSA key exchange and
+	// authentication.
+	if _, isRSA := key.(*rsa.PrivateKey); isRSA {
+		keyUsage |= x509.KeyUsageKeyEncipherment
+	}
+	// If certificate is a CA, force CertSign usage
+	if req.IsCA {
+		keyUsage |= x509.KeyUsageCertSign
+	}
+
 	notBefore := time.Now()
 	template := &x509.Certificate{
 		Subject: pkix.Name{
@@ -164,16 +177,11 @@ func GenerateCertificate(req CertificateRequest, key crypto.PrivateKey, issuer *
 		IsCA:                  req.IsCA,
 		NotBefore:             notBefore,
 		NotAfter:              notBefore.Add(req.Duration),
-		KeyUsage:              x509.KeyUsageDigitalSignature,
-		ExtKeyUsage:           req.ExtKeyUsages,
+		KeyUsage:              keyUsage,
+		ExtKeyUsage:           req.ExtKeyUsage,
 		DNSNames:              req.DNSNames,
 		IPAddresses:           req.IPAddresses,
 		BasicConstraintsValid: true,
-	}
-
-	// If certificate is a CA, force CertSign usage
-	if req.IsCA {
-		template.KeyUsage |= x509.KeyUsageCertSign
 	}
 
 	// Default is selfsigned

@@ -29,7 +29,7 @@ func TestLoadCertificateRequest(t *testing.T) {
 		PostalCodes:         []string{"12345"},
 		Duration:            12345 * time.Hour,
 		RenewBefore:         123 * time.Hour,
-		ExtKeyUsages:        []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
+		ExtKeyUsage:         []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
 		DNSNames:            []string{"localhost"},
 		IPAddresses:         []net.IP{net.IPv4(127, 0, 0, 1), net.IPv4(127, 0, 1, 1)},
 		PrivateKey:          PrivateKey{Algorithm: "ecdsa", Size: 384},
@@ -65,7 +65,7 @@ func TestLoadCertificateRequest_WithDefaultValues(t *testing.T) {
 		PostalCodes:         []string{"3220"},
 		Duration:            12345 * time.Hour,
 		RenewBefore:         123 * time.Hour,
-		ExtKeyUsages:        []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		ExtKeyUsage:         []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 	}
 
 	actual, err := LoadCertificateRequest("testdata/valid-defaults.yaml")
@@ -98,6 +98,10 @@ func TestLoadCertificateRequest_WithErrors(t *testing.T) {
 		"Invalid key usages": {
 			certificateRequestFile: "testdata/invalid-keyusage.yaml",
 			expectedError:          ErrInvalidKeyUsages,
+		},
+		"Invalid ext key usages": {
+			certificateRequestFile: "testdata/invalid-extkeyusage.yaml",
+			expectedError:          ErrInvalidExtKeyUsages,
 		},
 		"Invalid IP address": {
 			certificateRequestFile: "testdata/invalid-ipaddresses.yaml",

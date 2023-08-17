@@ -1,0 +1,16 @@
+out:
+  dir: example/tls/certs/server
+  cert: selfsigned.crt
+  key: selfsigned.key
+commonName: localhost
+duration: 8760h # 1 year
+renewBefore: 720h # 1 month
+extKeyUsages:
+  - server auth
+dnsNames:
+  - localhost
+ipAddresses:
+  - 127.0.0.1
+privateKey:
+  algorithm: rsa
+  size: 4096
