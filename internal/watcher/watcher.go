@@ -46,7 +46,10 @@ func listenEvents() {
 				return
 			}
 			if event.Has(fsnotify.Write) {
-				tls.HandleCertificateRequestFile(event.Name)
+				// Handle only files with compatible extension
+				if _, err := config.GetExtension(event.Name); err == nil {
+					tls.HandleCertificateRequestFile(event.Name)
+				}
 			}
 		case err, ok := <-watcher.Errors:
 			if !ok {

@@ -9,3 +9,6 @@ dnsNames:
   - localhost
 ipAddresses:
   - 127.0.0.1
+privateKey:
+  algorithm: ecdsa
+  size: 384

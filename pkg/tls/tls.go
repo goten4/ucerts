@@ -73,7 +73,7 @@ func HandleCertificateRequestFile(file string) {
 
 func GenerateOutFilesFromRequest(req CertificateRequest) {
 	logger.Errorf("Generate key %s", req.OutKeyPath)
-	publicKey, err := GenerateKey(req)
+	publicKey, err := GeneratePrivateKey(req)
 	if err != nil {
 		logError(err)
 		return

@@ -32,6 +32,7 @@ func TestLoadCertificateRequest(t *testing.T) {
 		ExtKeyUsages:        []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
 		DNSNames:            []string{"localhost"},
 		IPAddresses:         []net.IP{net.IPv4(127, 0, 0, 1), net.IPv4(127, 0, 1, 1)},
+		PrivateKey:          PrivateKey{Algorithm: "ecdsa", Size: 384},
 	}
 
 	actual, err := LoadCertificateRequest("testdata/valid.yaml")

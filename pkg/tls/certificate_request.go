@@ -22,7 +22,6 @@ const (
 	KeyOutKey              = "out.key"
 	KeyOutCA               = "out.ca"
 	KeyCommonName          = "commonName"
-	KeySerialNumber        = "serialNumber"
 	KeyDuration            = "duration"
 	KeyRenewBefore         = "renewBefore"
 	KeyExtKeyUsages        = "extKeyUsages"
@@ -35,6 +34,8 @@ const (
 	KeyProvinces           = "subject.provinces"
 	KeyStreetAddresses     = "subject.streetAddresses"
 	KeyPostalCodes         = "subject.postalCodes"
+	KeyPrivateKeyAlgorithm = "privateKey.algorithm"
+	KeyPrivateKeySize      = "privateKey.size"
 )
 
 var (
@@ -46,8 +47,7 @@ var (
 )
 
 type PrivateKey struct {
-	Encoding  func()
-	Algorithm func()
+	Algorithm string
 	Size      int
 }
 
@@ -116,6 +116,7 @@ func LoadCertificateRequest(path string) (CertificateRequest, error) {
 		PostalCodes:         conf.GetStringSlice(KeyPostalCodes),
 		Duration:            conf.GetDuration(KeyDuration),
 		RenewBefore:         conf.GetDuration(KeyRenewBefore),
+		PrivateKey:          PrivateKey{Algorithm: conf.GetString(KeyPrivateKeyAlgorithm), Size: conf.GetInt(KeyPrivateKeySize)},
 	}
 
 	for _, s := range conf.GetStringSlice(KeyExtKeyUsages) {

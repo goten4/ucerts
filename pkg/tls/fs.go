@@ -19,7 +19,7 @@ var (
 	ErrReadDir          = errors.New("read directory")
 )
 
-func WritePemToFile(b *pem.Block, file string) error {
+var WritePemToFile = func(b *pem.Block, file string) error {
 	pemFile, err := os.Create(file)
 	if err != nil {
 		return fmt.Errorf(format.WrapErrors, ErrCreateFile, err)
