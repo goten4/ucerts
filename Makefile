@@ -3,7 +3,7 @@ SHELL=/bin/bash -o pipefail
 RED := \033[31m
 GREEN := \033[32m
 NC := \033[m
-VERSION = v0.1.0
+VERSION := $(shell git describe --abbrev=0)
 BUILD_TIME ?= $(shell date +%FT%T%z)
 GO_TEST_FLAGS ?= -race
 GO_BUILD_FLAGS += -tags timetzdata
@@ -26,4 +26,6 @@ cover: test
 	@go tool cover -html=coverage.out &
 
 release:
+	@read -p "Enter new release version (last release was $(VERSION)): " tag && \
+	git tag -a $$tag -m "Release $$tag" && git push origin $$tag
 	@unset GITLAB_TOKEN && goreleaser release --clean
