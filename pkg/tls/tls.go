@@ -51,7 +51,7 @@ func HandleCertificateRequestFile(file string) {
 		return
 	}
 
-	if cert.NotAfter.Before(time.Now()) {
+	if cert.NotAfter.Before(time.Now().Add(req.RenewBefore)) {
 		logger.Printf("Expired certificate %s", req.OutCertPath)
 		GenerateOutFilesFromRequest(req, issuer)
 		return
