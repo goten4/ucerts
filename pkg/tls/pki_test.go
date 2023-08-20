@@ -1,8 +1,10 @@
 package tls
 
 import (
+	"crypto/x509"
 	"encoding/pem"
 	"errors"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -77,4 +79,54 @@ func TestGeneratePrivateKey_WithError(t *testing.T) {
 			assert.ErrorIs(t, err, tc.expectedError)
 		})
 	}
+}
+
+func TestGenerateCertificate(t *testing.T) {
+	var req CertificateRequest
+	var pemBlock *pem.Block
+	mock(t, &WritePemToFile, func(b *pem.Block, _ string) error {
+		pemBlock = b
+		return nil
+	})
+	key, err := GeneratePrivateKey(req)
+	require.NoError(t, err)
+
+	err = GenerateCertificate(req, key, nil)
+
+	require.NoError(t, err)
+	assert.Equal(t, "CERTIFICATE", pemBlock.Type)
+}
+
+func TestGenerateCertificate_WithError(t *testing.T) {
+	var req CertificateRequest
+	mock(t, &WritePemToFile, func(_ *pem.Block, _ string) error { return nil })
+	key, err := GeneratePrivateKey(req)
+	require.NoError(t, err)
+	mock(t, &WritePemToFile, func(_ *pem.Block, _ string) error { return errors.New("error") })
+
+	err = GenerateCertificate(req, key, nil)
+
+	require.ErrorIs(t, err, ErrGenerateCert)
+}
+
+func TestCopyCA(t *testing.T) {
+	issuer, err := LoadIssuer(IssuerPath{PublicKey: "testdata/ca.crt", PrivateKey: "testdata/ca.key"})
+	require.NoError(t, err)
+
+	err = CopyCA(issuer, "testdata/test-ca.crt")
+
+	require.NoError(t, err)
+	expected, err := os.ReadFile("testdata/ca.crt")
+	require.NoError(t, err)
+	actual, err := os.ReadFile("testdata/test-ca.crt")
+	require.NoError(t, err)
+	assert.Equal(t, expected, actual)
+}
+
+func TestCopyCA_WithError(t *testing.T) {
+	mock(t, &WritePemToFile, func(_ *pem.Block, _ string) error { return errors.New("error") })
+
+	err := CopyCA(&Issuer{PublicKey: &x509.Certificate{}}, "")
+
+	require.ErrorIs(t, err, ErrCopyCA)
 }

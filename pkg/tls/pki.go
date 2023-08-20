@@ -13,7 +13,6 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
-	"os"
 	"strings"
 	"time"
 
@@ -220,17 +219,10 @@ func publicKey(priv any) any {
 }
 
 func CopyCA(issuer *Issuer, path string) error {
-	pemCAFile, err := os.Create(path)
+	pemCert := &pem.Block{Type: "CERTIFICATE", Bytes: issuer.PublicKey.Raw}
+	err := WritePemToFile(pemCert, path)
 	if err != nil {
 		return fmt.Errorf(format.WrapErrors, ErrCopyCA, err)
 	}
-	defer pemCAFile.Close()
-
-	pemCA := &pem.Block{Type: "CERTIFICATE", Bytes: issuer.PublicKey.Raw}
-	err = pem.Encode(pemCAFile, pemCA)
-	if err != nil {
-		return fmt.Errorf(format.WrapErrors, ErrCopyCA, err)
-	}
-
 	return nil
 }
