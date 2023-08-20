@@ -13,7 +13,7 @@ var (
 	ErrInvalidPEMBlock = errors.New("invalid PEM block")
 )
 
-func LoadCertificateRequests(dir string) {
+var LoadCertificateRequests = func(dir string) {
 	files, err := ReadDir(dir)
 	if err != nil {
 		logrus.Errorf("Failed to read directory %s: %v", dir, err)
