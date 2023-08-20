@@ -44,7 +44,7 @@ var (
 	ErrUnsupportedECDSAKeySize        = errors.New("unsupported ecdsa key size")
 )
 
-func GeneratePrivateKey(req CertificateRequest) (crypto.PrivateKey, error) {
+var GeneratePrivateKey = func(req CertificateRequest) (crypto.PrivateKey, error) {
 	algorithm := req.PrivateKey.Algorithm
 	if algorithm == "" {
 		algorithm = RSA
@@ -77,7 +77,7 @@ func GeneratePrivateKey(req CertificateRequest) (crypto.PrivateKey, error) {
 	return key, nil
 }
 
-var generateRSAPrivateKey = func(req CertificateRequest) (crypto.PrivateKey, *pem.Block, error) {
+func generateRSAPrivateKey(req CertificateRequest) (crypto.PrivateKey, *pem.Block, error) {
 	keySize := req.PrivateKey.Size
 	if keySize == 0 {
 		keySize = MinRSAKeySize
@@ -95,7 +95,7 @@ var generateRSAPrivateKey = func(req CertificateRequest) (crypto.PrivateKey, *pe
 	return key, &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(key)}, nil
 }
 
-var generateECPrivateKey = func(req CertificateRequest) (crypto.PrivateKey, *pem.Block, error) {
+func generateECPrivateKey(req CertificateRequest) (crypto.PrivateKey, *pem.Block, error) {
 	keySize := req.PrivateKey.Size
 	if keySize == 0 {
 		keySize = 256
@@ -126,7 +126,7 @@ var generateECPrivateKey = func(req CertificateRequest) (crypto.PrivateKey, *pem
 	return key, &pem.Block{Type: "EC PRIVATE KEY", Bytes: bytes}, nil
 }
 
-var generateEd25519PrivateKey = func(req CertificateRequest) (crypto.PrivateKey, *pem.Block, error) {
+func generateEd25519PrivateKey(req CertificateRequest) (crypto.PrivateKey, *pem.Block, error) {
 	_, key, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
 		return nil, nil, err
@@ -140,7 +140,7 @@ var generateEd25519PrivateKey = func(req CertificateRequest) (crypto.PrivateKey,
 	return key, &pem.Block{Type: "PRIVATE KEY", Bytes: bytes}, nil
 }
 
-func GenerateCertificate(req CertificateRequest, key crypto.PrivateKey, issuer *Issuer) error {
+var GenerateCertificate = func(req CertificateRequest, key crypto.PrivateKey, issuer *Issuer) error {
 	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
 	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
 	if err != nil {
@@ -218,7 +218,7 @@ func publicKey(priv any) any {
 	}
 }
 
-func CopyCA(issuer *Issuer, path string) error {
+var CopyCA = func(issuer *Issuer, path string) error {
 	pemCert := &pem.Block{Type: "CERTIFICATE", Bytes: issuer.PublicKey.Raw}
 	err := WritePemToFile(pemCert, path)
 	if err != nil {

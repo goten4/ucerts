@@ -22,7 +22,7 @@ var (
 	ErrReadDir                = errors.New("read directory")
 )
 
-func LoadIssuer(path IssuerPath) (*Issuer, error) {
+var LoadIssuer = func(path IssuerPath) (*Issuer, error) {
 	if path.PublicKey == "" || path.PrivateKey == "" {
 		return nil, nil
 	}
@@ -51,7 +51,7 @@ var WritePemToFile = func(b *pem.Block, file string) error {
 	return nil
 }
 
-func LoadCertFromFile(file string) (*x509.Certificate, error) {
+var LoadCertFromFile = func(file string) (*x509.Certificate, error) {
 	b, err := os.ReadFile(file)
 	if err != nil {
 		return nil, fmt.Errorf(format.WrapErrors, ErrReadFile, err)
@@ -85,7 +85,7 @@ var ReadDir = func(dir string) ([]string, error) {
 	return files, nil
 }
 
-func MakeParentsDirectories(path string) bool {
+var MakeParentsDirectories = func(path string) bool {
 	dir := filepath.Dir(path)
 	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
 		if err := os.MkdirAll(dir, 0755); err != nil {
@@ -95,7 +95,7 @@ func MakeParentsDirectories(path string) bool {
 	return true
 }
 
-func FileDoesNotExists(file string) bool {
+var FileDoesNotExists = func(file string) bool {
 	_, err := os.Stat(file)
 	return errors.Is(err, os.ErrNotExist)
 }

@@ -85,7 +85,7 @@ type CertificateRequest struct {
 	IssuerPath          IssuerPath
 }
 
-func LoadCertificateRequest(path string) (CertificateRequest, error) {
+var LoadCertificateRequest = func(path string) (CertificateRequest, error) {
 	conf := viper.New()
 	file, err := os.Open(path)
 	if err != nil {

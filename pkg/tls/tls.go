@@ -65,15 +65,15 @@ var HandleCertificateRequestFile = func(file string) {
 	}
 }
 
-func GenerateOutFilesFromRequest(req CertificateRequest, issuer *Issuer) {
-	logrus.Infof("Generate key %s", req.OutKeyPath)
+var GenerateOutFilesFromRequest = func(req CertificateRequest, issuer *Issuer) {
+	logrus.Infof("Generate key to %s", req.OutKeyPath)
 	key, err := GeneratePrivateKey(req)
 	if err != nil {
 		logError(err)
 		return
 	}
 
-	logrus.Infof("Generate certificate %s", req.OutCertPath)
+	logrus.Infof("Generate certificate to %s", req.OutCertPath)
 	if err := GenerateCertificate(req, key, issuer); err != nil {
 		logError(err)
 		return
