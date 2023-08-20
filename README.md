@@ -4,6 +4,12 @@ uCerts is a powerful and user-friendly tool designed to simplify the generation 
 including self-signed root CAs, and manage their automatic renewal. With uCerts, you can streamline the process of
 securing your applications with trusted certificates, ensuring data integrity and secure communication.
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/goten4/ucerts?)](https://goreportcard.com/report/github.com/goten4/ucerts)
+[![Build Status](https://github.com/goten4/ucerts/actions/workflows/go.yml/badge.svg)](https://github.com/goten4/ucerts/actions)
+[![codecov](https://codecov.io/gh/goten4/ucerts/graph/badge.svg?token=LDW52PRVSN)](https://codecov.io/gh/goten4/ucerts)
+[![release](https://img.shields.io/github/release-pre/goten4/ucerts.svg)](https://github.com/goten4/ucerts/releases)
+[![Releases](https://img.shields.io/github/downloads/goten4/ucerts/total.svg)](https://github.com/goten4/ucerts/releases)
+
 ## Features
 
 - **Certificate Generation**: Easily generate private TLS certificates and self-signed root Certificate Authorities(CAs) for your applications.
