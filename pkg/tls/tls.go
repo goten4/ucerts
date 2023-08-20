@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
+
+	"github.com/goten4/ucerts/internal/config"
 )
 
 var (
@@ -22,7 +24,12 @@ func LoadCertificateRequests(dir string) {
 	}
 }
 
-func HandleCertificateRequestFile(file string) {
+var HandleCertificateRequestFile = func(file string) {
+	// Handle only files with compatible extension
+	if _, err := config.GetExtension(file); err != nil {
+		return
+	}
+
 	logrus.Infof("Handle certificate request %s", file)
 	req, err := LoadCertificateRequest(file)
 	if err != nil {

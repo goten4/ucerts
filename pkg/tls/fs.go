@@ -70,7 +70,7 @@ func LoadCertFromFile(file string) (*x509.Certificate, error) {
 	return x509Cert, nil
 }
 
-func ReadDir(dir string) ([]string, error) {
+var ReadDir = func(dir string) ([]string, error) {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
 		return nil, fmt.Errorf(format.WrapErrors, ErrReadDir, err)

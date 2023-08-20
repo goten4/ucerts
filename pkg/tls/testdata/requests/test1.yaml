@@ -1,0 +1,41 @@
+out:
+  dir: testdata/tls
+  cert: server.crt
+  key: key.pem
+  ca: ca.pem
+commonName: test
+subject:
+  countries:
+    - FR
+    - BE
+  provinces:
+    - France
+    - Belgium
+  localities:
+    - Bordeaux
+    - Bruxelles
+  organizations:
+    - uCerts
+  organizationalUnits:
+    - test
+  streetAddresses:
+    - test street
+  postalCodes:
+    - 12345
+duration: 12345h
+renewBefore: 123h
+extKeyUsages:
+  - server auth
+  - client auth
+dnsNames:
+  - localhost
+ipAddresses:
+  - 127.0.0.1
+  - 127.0.1.1
+privateKey:
+  algorithm: ecdsa
+  size: 384
+issuer:
+  dir: testdata
+  publicKey: ca.pem
+  privateKey: ca-key.pem
