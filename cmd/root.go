@@ -4,20 +4,21 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
 	"github.com/goten4/ucerts/internal/build"
 	"github.com/goten4/ucerts/internal/config"
 	"github.com/goten4/ucerts/internal/daemon"
-	"github.com/goten4/ucerts/internal/logger"
 	"github.com/goten4/ucerts/internal/watcher"
 	"github.com/goten4/ucerts/pkg/tls"
 )
 
 func Execute() {
 	cobra.OnInitialize(func() {
-		logger.Init(logger.ShutdownFunc(daemon.Stop))
+		logrus.RegisterExitHandler(daemon.GracefulStop)
+		logrus.SetOutput(os.Stdout)
 		config.Init()
 	})
 
@@ -38,7 +39,7 @@ func Execute() {
 	rootCmd.AddCommand(versionCmd)
 
 	if err := rootCmd.Execute(); err != nil {
-		logger.Fail(err.Error())
+		logrus.Fatal(err.Error())
 	}
 }
 
@@ -49,7 +50,7 @@ func version(_ *cobra.Command, _ []string) {
 }
 
 func run(_ *cobra.Command, _ []string) {
-	defer daemon.Shutdown()
+	defer daemon.GracefulStop()
 
 	daemon.PushGracefulStop(tls.Start())
 	daemon.PushGracefulStop(watcher.Start())

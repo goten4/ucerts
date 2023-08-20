@@ -4,7 +4,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/goten4/ucerts/internal/logger"
+	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -14,7 +14,7 @@ var (
 func LoadCertificateRequests(dir string) {
 	files, err := ReadDir(dir)
 	if err != nil {
-		logger.Errorf("Failed to read directory %s: %v", dir, err)
+		logrus.Errorf("Failed to read directory %s: %v", dir, err)
 		return
 	}
 	for _, file := range files {
@@ -23,16 +23,16 @@ func LoadCertificateRequests(dir string) {
 }
 
 func HandleCertificateRequestFile(file string) {
-	logger.Printf("Handle certificate request %s", file)
+	logrus.Infof("Handle certificate request %s", file)
 	req, err := LoadCertificateRequest(file)
 	if err != nil {
-		logger.Errorf("Failed to load certificate request: %v", err)
+		logrus.Errorf("Failed to load certificate request: %v", err)
 		return
 	}
 
 	issuer, err := LoadIssuer(req.IssuerPath)
 	if err != nil {
-		logger.Errorf("Invalid issuer: %v", err)
+		logrus.Errorf("Invalid issuer: %v", err)
 		return
 	}
 
@@ -46,34 +46,34 @@ func HandleCertificateRequestFile(file string) {
 
 	cert, err := LoadCertFromFile(req.OutCertPath)
 	if err != nil {
-		logger.Errorf("Invalid certificate %s: %v", req.OutCertPath, err)
+		logrus.Errorf("Invalid certificate %s: %v", req.OutCertPath, err)
 		GenerateOutFilesFromRequest(req, issuer)
 		return
 	}
 
 	if cert.NotAfter.Before(time.Now().Add(req.RenewBefore)) {
-		logger.Printf("Expired certificate %s", req.OutCertPath)
+		logrus.Infof("Expired certificate %s", req.OutCertPath)
 		GenerateOutFilesFromRequest(req, issuer)
 		return
 	}
 }
 
 func GenerateOutFilesFromRequest(req CertificateRequest, issuer *Issuer) {
-	logger.Printf("Generate key %s", req.OutKeyPath)
+	logrus.Infof("Generate key %s", req.OutKeyPath)
 	key, err := GeneratePrivateKey(req)
 	if err != nil {
 		logError(err)
 		return
 	}
 
-	logger.Printf("Generate certificate %s", req.OutCertPath)
+	logrus.Infof("Generate certificate %s", req.OutCertPath)
 	if err := GenerateCertificate(req, key, issuer); err != nil {
 		logError(err)
 		return
 	}
 
 	if issuer != nil {
-		logger.Printf("Copy CA to %s", req.OutCAPath)
+		logrus.Infof("Copy CA to %s", req.OutCAPath)
 		if err := CopyCA(issuer, req.OutCAPath); err != nil {
 			logError(err)
 			return
@@ -82,5 +82,5 @@ func GenerateOutFilesFromRequest(req CertificateRequest, issuer *Issuer) {
 }
 
 func logError(err error) {
-	logger.Errorf("Failure: %v", err)
+	logrus.Errorf("Failure: %v", err)
 }

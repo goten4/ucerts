@@ -1,10 +1,12 @@
 # uCerts - Automated private TLS Certificate Management Tool
 
-uCerts is a powerful and user-friendly tool designed to simplify the generation of private TLS certificates, including self-signed root CAs, and manage their automatic renewal. With uCerts, you can streamline the process of securing your applications with trusted certificates, ensuring data integrity and secure communication.
+uCerts is a powerful and user-friendly tool designed to simplify the generation of private TLS certificates,
+including self-signed root CAs, and manage their automatic renewal. With uCerts, you can streamline the process of
+securing your applications with trusted certificates, ensuring data integrity and secure communication.
 
 ## Features
 
-- **Certificate Generation**: Easily generate private TLS certificates and self-signed root Certificate Authorities (CAs) for your applications.
+- **Certificate Generation**: Easily generate private TLS certificates and self-signed root Certificate Authorities(CAs) for your applications.
 - **Automated Renewal**: uCerts takes care of the automatic renewal of managed certificates, ensuring your services remain secure without manual intervention.
 - **Configurable Options**: Customize certificate attributes and settings according to your application's requirements.
 
@@ -21,105 +23,14 @@ go install github.com/goten4/uCerts
 
 ## Configuration
 
-Here is an example of uCerts configuration file :
-```yaml
-shutdown:
-  timeout: 10s # Duration to wait before exit program without wait for graceful stop
-interval: 5m # uCerts checks periodically if a certificate should be renewed (default is 5m)
-certificateRequests:
-  paths:
-    - /path/to/watch/for/certificate/requests/ca # Add path to root CAs first if you want to use it as issuer for certificates 
-    - /path/to/watch/for/certificate/requests/server
-    - /path/to/watch/for/certificate/requests/client
-default: # TLS subject default values for all managed certificates 
-  countries:
-    - FR
-  provinces:
-    - France
-  organizations:
-    - uCerts
-  organizationalUnits:
-    - unit
-  localities: 
-    - Bordeaux
-  streetAddresses:
-    - Street
-  postalCodes:
-    - 3210
-```
+uCerts requires a configuration file, the supported extensions are: `json`, `toml`, `yaml`, `yml`, `properties`,
+`props`, `prop`, `hcl`, `tfvars`, `dotenv`, `env`, `ini`.
 
-## Certificate requests
+You will find an example configuration file in yaml at [example/etc/config.yaml](example/etc/config.yaml).
 
-File `/opt/ucerts/requests/ca/ca.yaml`
-```yaml
-out:
-  dir: /opt/ucerts/certs/ca
-  cert: ca.crt
-  key: ca.key
-commonName: uCerts
-duration: 87600h # 10 years
-renewBefore: 8760h # 1 year
-isCA: true
-privateKey:
-  algorithm: rsa
-  size: 4096
-```
-
-File `/opt/ucerts/requests/server/localhost.yaml`
-```yaml
-out:
-  dir: /opt/ucerts/certs/server
-  cert: localhost.crt
-  key: localhost.key
-commonName: localhost
-duration: 8760h # 1 year
-renewBefore: 720h # 1 month
-extKeyUsages:
-  - server auth
-dnsNames:
-  - localhost
-ipAddresses:
-  - 127.0.0.1
-  - 127.0.1.1
-privateKey:
-  algorithm: ecdsa
-  size: 384
-issuer:
-  dir: /opt/ucerts/certs/ca
-  cert: ca.crt
-  key: ca.key
-```
-
-File `/opt/ucerts/requests/server/selfsigned.yaml`
-```yaml
-out:
-  dir: /opt/ucerts/certs/server
-  cert: selfsigned.crt
-  key: selfsigned.key
-commonName: localhost
-duration: 8760h # 1 year
-renewBefore: 720h # 1 month
-extKeyUsages:
-  - server auth
-dnsNames:
-  - localhost
-ipAddresses:
-  - 127.0.0.1
-  - 127.0.1.1
-```
-
-File `/opt/ucerts/requests/client/client.yaml`
-```yaml
-out:
-  dir: /opt/ucerts/certs/client
-commonName: client
-duration: 168h # 7 days
-renewBefore: 144h # 6 days
-extKeyUsages:
-  - client auth
-issuer:
-  dir: /opt/ucerts/certs/ca
-```
+In this configuration file, you must specify the path or paths to the `Certificate Requests`. These are files that
+describe the parameters of the certificates that uCerts needs to generate and renew. You will find examples of
+`Certificate Requests` in the directory [example/tls/requests](example/tls/requests).
 
 ## Run
 
@@ -159,6 +70,15 @@ Restart=always
 
 [Install]
 WantedBy=default.target
+```
+
+### Example
+
+To test the example files:
+
+```shell
+$ make build
+$ ./ucerts -c example/etc/config.yaml
 ```
 
 ## Contributions

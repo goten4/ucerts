@@ -1,0 +1,26 @@
+shutdown_timeout: 123s
+interval: 321s
+log:
+  level: debug
+  format: json
+  timestamp:
+    enable: true
+    format: 2006-01-02T15:04:05
+certificateRequests:
+  paths:
+    - test
+default:
+  countries:
+    - testC
+  provinces:
+    - testP
+  organizations:
+    - testO
+  organizationalUnits:
+    - testOU
+  localities:
+    - testL
+  streetAddresses:
+    - testSA
+  postalCodes:
+    - testPC

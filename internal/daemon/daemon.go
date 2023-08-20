@@ -6,19 +6,20 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/goten4/ucerts/internal/build"
 	"github.com/goten4/ucerts/internal/config"
-	"github.com/goten4/ucerts/internal/logger"
 )
 
 var signals = make(chan os.Signal, 1)
 
 var WaitForStop = func() {
-	logger.Printf("%s %s started", build.Name, build.Version)
+	logrus.Infof("%s %s started", build.Name, build.Version)
 	signal.Notify(signals, syscall.SIGTERM, syscall.SIGINT)
 	defer signal.Stop(signals)
 	for s := range signals {
-		logger.Printf("Signal %s received", s)
+		logrus.Infof("Signal %s received", s)
 		go func() {
 			<-time.After(config.ShutdownTimeout)
 			os.Exit(1)
@@ -27,14 +28,9 @@ var WaitForStop = func() {
 	}
 }
 
-var Stop = func() {
-	Shutdown()
-	os.Exit(1)
-}
-
-var Shutdown = func() {
+var GracefulStop = func() {
 	callGracefulStops()
-	logger.Printf("%s stopped", build.Name)
+	logrus.Infof("%s stopped", build.Name)
 }
 
 func callGracefulStops() {

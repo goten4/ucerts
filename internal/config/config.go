@@ -8,14 +8,17 @@ import (
 	"strings"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-
-	"github.com/goten4/ucerts/internal/logger"
 )
 
 const (
-	KeyShutdownTimeout            = "shutdown.timeout"
+	KeyShutdownTimeout            = "shutdown_timeout"
 	KeyInterval                   = "interval"
+	KeyLogLevel                   = "log.level"
+	KeyLogFormat                  = "log.format"
+	KeyLogTimestampEnable         = "log.timestamp.enable"
+	KeyLogTimestampFormat         = "log.timestamp.format"
 	KeyCertificateRequestsPaths   = "certificateRequests.paths"
 	KeyDefaultCountries           = "default.countries"
 	KeyDefaultOrganizations       = "default.organizations"
@@ -44,26 +47,47 @@ var (
 func Init() {
 	viper.SetDefault(KeyShutdownTimeout, 10*time.Second)
 	viper.SetDefault(KeyInterval, 5*time.Minute)
+	viper.SetDefault(KeyLogLevel, "info")
+	viper.SetDefault(KeyLogFormat, "text")
+	viper.SetDefault(KeyLogTimestampEnable, false)
+	viper.SetDefault(KeyLogTimestampFormat, time.DateTime)
 
 	viper.SetEnvPrefix("UCERTS")
 	viper.AutomaticEnv()
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
-	if configFile := viper.GetString("config"); configFile != "" {
-		logger.Printf("Loading configuration file %s", configFile)
+	configFile := viper.GetString("config")
+	if configFile != "" {
 		file, err := os.Open(configFile)
 		if err != nil {
-			logger.Failf("Failed to load configuration file: %v", configFile, err)
+			logrus.Fatalf("Failed to load configuration file %s: %v", configFile, err)
 		}
 		ext, err := GetExtension(configFile)
 		if err != nil {
-			logger.Failf("Failed to load configuration file: %v", configFile, err)
+			logrus.Fatalf("Failed to load configuration file %s: %v", configFile, err)
 		}
 		viper.SetConfigType(ext)
 		if err := viper.ReadConfig(file); err != nil {
-			logger.Failf("Failed to read configuration file: %v", configFile, err)
+			logrus.Fatalf("Failed to read configuration file %s: %v", configFile, err)
 		}
 	}
+
+	logLevel, err := logrus.ParseLevel(viper.GetString(KeyLogLevel))
+	if err != nil {
+		logrus.Fatalf("Invalid log level: %v", err)
+	}
+	logrus.SetLevel(logLevel)
+
+	enableTimestamp := viper.GetBool(KeyLogTimestampEnable)
+	timestampFormat := viper.GetString(KeyLogTimestampFormat)
+	var formatter logrus.Formatter
+	switch viper.GetString(KeyLogFormat) {
+	case "json":
+		formatter = &logrus.JSONFormatter{DisableTimestamp: !enableTimestamp, TimestampFormat: timestampFormat}
+	default:
+		formatter = &logrus.TextFormatter{DisableTimestamp: !enableTimestamp, FullTimestamp: true, TimestampFormat: timestampFormat}
+	}
+	logrus.SetFormatter(formatter)
 
 	ShutdownTimeout = viper.GetDuration(KeyShutdownTimeout)
 	Interval = viper.GetDuration(KeyInterval)
@@ -75,6 +99,8 @@ func Init() {
 	DefaultProvinces = viper.GetStringSlice(KeyDefaultProvinces)
 	DefaultStreetAddresses = viper.GetStringSlice(KeyDefaultStreetAddresses)
 	DefaultPostalCodes = viper.GetStringSlice(KeyDefaultPostalCodes)
+
+	logrus.Infof("Configuration file loaded: %s", configFile)
 }
 
 func GetExtension(configFile string) (string, error) {

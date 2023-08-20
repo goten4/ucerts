@@ -2,10 +2,10 @@ package watcher
 
 import (
 	"github.com/fsnotify/fsnotify"
+	"github.com/sirupsen/logrus"
 
 	"github.com/goten4/ucerts/internal/config"
 	"github.com/goten4/ucerts/internal/funcs"
-	"github.com/goten4/ucerts/internal/logger"
 	"github.com/goten4/ucerts/pkg/tls"
 )
 
@@ -16,12 +16,12 @@ var (
 func Start() funcs.Stop {
 	var err error
 	if watcher, err = fsnotify.NewWatcher(); err != nil {
-		logger.Failf("Failed to start TLS configs watcher: %v", err)
+		logrus.Fatalf("Failed to start TLS configs watcher: %v", err)
 		return funcs.NoOp
 	}
 	stop := func() {
 		if err := watcher.Close(); err != nil {
-			logger.Errorf("Failed to close TLS configs watcher: %v", err)
+			logrus.Errorf("Failed to close TLS configs watcher: %v", err)
 		}
 	}
 
@@ -29,9 +29,9 @@ func Start() funcs.Stop {
 
 	// Add TLS configs paths
 	for _, path := range config.CertificateRequestsPaths {
-		logger.Printf("Watching for path %s", path)
+		logrus.Infof("Watching for path %s", path)
 		if err = watcher.Add(path); err != nil {
-			logger.Failf("Failed to add TLS config dir %s: %v", path, err)
+			logrus.Fatalf("Failed to add TLS config dir %s: %v", path, err)
 		}
 	}
 
@@ -55,7 +55,7 @@ func listenEvents() {
 			if !ok {
 				return
 			}
-			logger.Errorf("Error while watching TLS configs:", err)
+			logrus.Errorf("Error while watching TLS configs: %v", err)
 		}
 	}
 }
