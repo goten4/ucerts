@@ -1,4 +1,4 @@
-package tls
+package manager
 
 import (
 	"bytes"
@@ -10,15 +10,18 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/goten4/ucerts/internal/config"
 )
 
 func TestLoadCertificateRequests(t *testing.T) {
 	var handledFiles []string
 	mock(t, &HandleCertificateRequestFile, func(file string) { handledFiles = append(handledFiles, file) })
+	config.CertificateRequestsPaths = []string{"testdata/requests/test1", "testdata/requests/test2"}
 
-	LoadCertificateRequests("testdata/requests")
+	LoadCertificateRequests()
 
-	assert.Equal(t, []string{"testdata/requests/test1.yaml", "testdata/requests/test2.yaml"}, handledFiles)
+	assert.Equal(t, []string{"testdata/requests/test1/test1.yaml", "testdata/requests/test2/test2.yaml"}, handledFiles)
 }
 
 func TestHandleCertificateRequestFile_WithInvalidExtension(t *testing.T) {

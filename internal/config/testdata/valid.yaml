@@ -1,4 +1,4 @@
-shutdown_timeout: 123s
+shutdownTimeout: 123s
 interval: 321s
 log:
   level: debug

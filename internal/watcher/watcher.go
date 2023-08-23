@@ -6,7 +6,7 @@ import (
 
 	"github.com/goten4/ucerts/internal/config"
 	"github.com/goten4/ucerts/internal/funcs"
-	"github.com/goten4/ucerts/pkg/tls"
+	"github.com/goten4/ucerts/pkg/manager"
 )
 
 var (
@@ -46,7 +46,7 @@ func listenEvents() {
 				return
 			}
 			if event.Has(fsnotify.Write) {
-				tls.HandleCertificateRequestFile(event.Name)
+				manager.HandleCertificateRequestFile(event.Name)
 			}
 		case err, ok := <-watcher.Errors:
 			if !ok {

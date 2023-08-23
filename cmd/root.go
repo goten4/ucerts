@@ -12,7 +12,8 @@ import (
 	"github.com/goten4/ucerts/internal/config"
 	"github.com/goten4/ucerts/internal/daemon"
 	"github.com/goten4/ucerts/internal/watcher"
-	"github.com/goten4/ucerts/pkg/tls"
+	"github.com/goten4/ucerts/pkg/agent"
+	"github.com/goten4/ucerts/pkg/manager"
 )
 
 func Execute() {
@@ -24,18 +25,23 @@ func Execute() {
 
 	rootCmd := &cobra.Command{
 		Use: build.Name,
-		Run: run,
+		Run: runManager,
 	}
 
 	rootCmd.PersistentFlags().StringP("config", "c", "", "provides the configuration file")
 	_ = viper.BindPFlag("config", rootCmd.PersistentFlags().Lookup("config"))
+
+	agentCmd := &cobra.Command{
+		Use: "agent",
+		Run: runAgent,
+	}
+	rootCmd.AddCommand(agentCmd)
 
 	versionCmd := &cobra.Command{
 		Use:   "version",
 		Short: "print version and exit",
 		Run:   version,
 	}
-
 	rootCmd.AddCommand(versionCmd)
 
 	if err := rootCmd.Execute(); err != nil {
@@ -49,11 +55,19 @@ func version(_ *cobra.Command, _ []string) {
 	os.Exit(0)
 }
 
-func run(_ *cobra.Command, _ []string) {
+func runManager(_ *cobra.Command, _ []string) {
 	defer daemon.GracefulStop()
 
-	daemon.PushGracefulStop(tls.Start())
+	daemon.PushGracefulStop(manager.Start())
 	daemon.PushGracefulStop(watcher.Start())
+
+	daemon.WaitForStop()
+}
+
+func runAgent(_ *cobra.Command, _ []string) {
+	defer daemon.GracefulStop()
+
+	daemon.PushGracefulStop(agent.Start(config.AgentGRPC))
 
 	daemon.WaitForStop()
 }

@@ -1,4 +1,4 @@
-package tls
+package manager
 
 import (
 	"sync/atomic"
@@ -14,7 +14,7 @@ func TestStart(t *testing.T) {
 	var loadCount atomic.Int32
 	config.Interval = 100 * time.Millisecond
 	config.CertificateRequestsPaths = []string{"testdata/requests"}
-	mock(t, &LoadCertificateRequests, func(_ string) {
+	mock(t, &LoadCertificateRequests, func() {
 		loadCount.Add(1)
 	})
 

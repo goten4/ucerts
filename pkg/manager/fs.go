@@ -1,4 +1,4 @@
-package tls
+package manager
 
 import (
 	"crypto/tls"
@@ -20,6 +20,7 @@ var (
 	ErrParseCertificate       = errors.New("parse certificate")
 	ErrEncode                 = errors.New("encode")
 	ErrReadDir                = errors.New("read directory")
+	ErrInvalidPEMBlock        = errors.New("invalid PEM block")
 )
 
 var LoadIssuer = func(path IssuerPath) (*Issuer, error) {

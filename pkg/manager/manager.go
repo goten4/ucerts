@@ -1,4 +1,4 @@
-package tls
+package manager
 
 import (
 	"time"
@@ -13,9 +13,7 @@ func Start() funcs.Stop {
 
 	go func() {
 		for {
-			for _, dir := range config.CertificateRequestsPaths {
-				LoadCertificateRequests(dir)
-			}
+			LoadCertificateRequests()
 
 			select {
 			case <-ticker.C:

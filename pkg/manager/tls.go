@@ -1,7 +1,6 @@
-package tls
+package manager
 
 import (
-	"errors"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -9,18 +8,16 @@ import (
 	"github.com/goten4/ucerts/internal/config"
 )
 
-var (
-	ErrInvalidPEMBlock = errors.New("invalid PEM block")
-)
-
-var LoadCertificateRequests = func(dir string) {
-	files, err := ReadDir(dir)
-	if err != nil {
-		logrus.Errorf("Failed to read directory %s: %v", dir, err)
-		return
-	}
-	for _, file := range files {
-		HandleCertificateRequestFile(file)
+var LoadCertificateRequests = func() {
+	for _, dir := range config.CertificateRequestsPaths {
+		files, err := ReadDir(dir)
+		if err != nil {
+			logrus.Errorf("Failed to read directory %s: %v", dir, err)
+			return
+		}
+		for _, file := range files {
+			HandleCertificateRequestFile(file)
+		}
 	}
 }
 

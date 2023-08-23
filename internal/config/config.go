@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	KeyShutdownTimeout            = "shutdown_timeout"
+	KeyShutdownTimeout            = "shutdownTimeout"
 	KeyInterval                   = "interval"
 	KeyLogLevel                   = "log.level"
 	KeyLogFormat                  = "log.format"
@@ -27,7 +27,23 @@ const (
 	KeyDefaultProvinces           = "default.provinces"
 	KeyDefaultStreetAddresses     = "default.streetAddresses"
 	KeyDefaultPostalCodes         = "default.postalCodes"
+	KeyAgentListenGRPC            = "agent.grpc.listen"
+	KeyKeepAlivePolicyMinTime     = "agent.grpc.keep_alive.policy_min_time"
+	KeyKeepAliveTime              = "agent.grpc.keep_alive.time"
+	KeyKeepAliveTimeout           = "agent.grpc.keep_alive.timeout"
 )
+
+type ServerGRPC struct {
+	Listen                 string
+	KeepAlivePolicyMinTime time.Duration
+	KeepAliveTime          time.Duration
+	KeepAliveTimeout       time.Duration
+	TLSEnable              bool
+	MTLSEnable             bool
+	TLSCAPath              string
+	TLSCertPath            string
+	TLSKeyPath             string
+}
 
 var (
 	ShutdownTimeout            time.Duration
@@ -40,6 +56,7 @@ var (
 	DefaultProvinces           []string
 	DefaultStreetAddresses     []string
 	DefaultPostalCodes         []string
+	AgentGRPC                  ServerGRPC
 
 	ErrInvalidExtension = errors.New("invalid extension")
 )
@@ -51,6 +68,7 @@ func Init() {
 	viper.SetDefault(KeyLogFormat, "text")
 	viper.SetDefault(KeyLogTimestampEnable, false)
 	viper.SetDefault(KeyLogTimestampFormat, time.DateTime)
+	viper.SetDefault(KeyAgentListenGRPC, ":4293")
 
 	viper.SetEnvPrefix("UCERTS")
 	viper.AutomaticEnv()
@@ -99,6 +117,9 @@ func Init() {
 	DefaultProvinces = viper.GetStringSlice(KeyDefaultProvinces)
 	DefaultStreetAddresses = viper.GetStringSlice(KeyDefaultStreetAddresses)
 	DefaultPostalCodes = viper.GetStringSlice(KeyDefaultPostalCodes)
+	AgentGRPC = ServerGRPC{
+		Listen: viper.GetString(KeyAgentListenGRPC),
+	}
 
 	logrus.Infof("Configuration file loaded: %s", configFile)
 }

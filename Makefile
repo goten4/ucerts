@@ -25,6 +25,10 @@ cover: override GO_TEST_FLAGS += -coverprofile=coverage.out
 cover: test
 	@go tool cover -html=coverage.out &
 
+protoc:
+	@protoc --proto_path=protobuf --go_opt=paths=source_relative --go_out=pkg/agent --go_opt=Magent.proto=github.com/goten4/ucerts/agent agent.proto
+	@protoc --proto_path=protobuf --go-grpc_opt=paths=source_relative --go-grpc_out=pkg/agent --go-grpc_opt=Magent.proto=github.com/goten4/ucerts/agent agent.proto
+
 release:
 	@read -p "Enter new release version (last release was $(VERSION)): " tag && \
 	git tag -a $$tag -m "Release $$tag" && git push origin $$tag
